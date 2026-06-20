@@ -74,7 +74,7 @@ public:
             auto loadedMin = (float) minSlider.getMinimum();
             auto loadedMax = (float) maxSlider.getMaximum();
             if (loadedMax > clusterMinMax_rangeMax || loadedMin < clusterMinMax_rangeMin)
-                displaySlider->setRange(loadedMin, loadedMax, sliderIncrement);
+                displaySlider->setRange(loadedMin, loadedMax, 1);
         }
 
         /*
