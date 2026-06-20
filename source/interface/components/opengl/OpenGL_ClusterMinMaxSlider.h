@@ -152,6 +152,10 @@ public:
         mouseInteraction = true;
         OpenGlAutoImageComponent<BKRangeSlider>::textEditorReturnKeyPressed(textEditor);
         mouseInteraction = false;
+        // Sync displaySlider to the final (possibly expanded) range and re-apply skew
+        // (setRange resets the skew factor to linear, so it must be reapplied).
+        displaySlider->setRange(minSlider.getMinimum(), maxSlider.getMaximum(), 1);
+        displaySlider->setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
         redoImage();
     }
 
