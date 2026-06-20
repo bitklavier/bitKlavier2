@@ -42,6 +42,7 @@ public:
 
         rangeSliderBorder.setText("Cluster Min/Max");
         invisibleSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
+        displaySlider->setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
 
         /**
          * these SliderAttachments contain the listeners for each slider, and so will be notified when the slider is manipulated
@@ -295,6 +296,7 @@ private :
         invisibleSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
         minSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
         maxSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
+        displaySlider->setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
     }
 
     int defmin, defmax;
