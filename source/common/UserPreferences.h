@@ -178,13 +178,13 @@ private:
 
 namespace ProjectInfo
 {
-    const char* const  projectName    = "bitKlavier4";
+    const char* const  projectName    = "bitKlavier5";
     const char* const  companyName    = "Many Arrows Music";
 #ifdef VERSION
     const char* const  versionString  = VERSION;
 #else
-    const char* const  versionString  = "4.0.0";
+    const char* const  versionString  = "5.0.0";
 #endif
-    const int          versionNumber  =  0x40000;
+    const int          versionNumber  =  0x50000;
 }
 #endif //BITKLAVIER2_USERPREFERENCES_H

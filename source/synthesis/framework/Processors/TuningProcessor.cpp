@@ -985,6 +985,25 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, 
             }
         )
     };
+
+    auto& sp = state.params.tuningState.springTuningParams;
+    for (auto* iw : { sp.intervalWeight_1.get(), sp.intervalWeight_2.get(), sp.intervalWeight_3.get(),
+                      sp.intervalWeight_4.get(), sp.intervalWeight_5.get(), sp.intervalWeight_6.get(),
+                      sp.intervalWeight_7.get(), sp.intervalWeight_8.get(), sp.intervalWeight_9.get(),
+                      sp.intervalWeight_10.get(), sp.intervalWeight_11.get(), sp.intervalWeight_12.get() })
+    {
+        tuningCallbacks +=
+        {
+            state.getParameterListeners().addParameterListener(
+                *iw,
+                chowdsp::ParameterListenerThread::MessageThread,
+                [this]()
+                {
+                    state.params.tuningState.springTuner->intervalWeightsChanged();
+                }
+            )
+        };
+    }
 }
 
 void TuningProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)

@@ -42,6 +42,7 @@ public:
 
         rangeSliderBorder.setText("Cluster Min/Max");
         invisibleSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
+        displaySlider->setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
 
         /**
          * these SliderAttachments contain the listeners for each slider, and so will be notified when the slider is manipulated
@@ -64,6 +65,17 @@ public:
 
         minValueTF.setText(juce::String(minSlider.getValue()),juce::dontSendNotification);
         maxValueTF.setText(juce::String(maxSlider.getValue()),juce::dontSendNotification);
+
+        // If the parameter range was expanded before this constructor ran (e.g., a gallery
+        // was loaded and SynchronicProcessor::deserialize widened range.end), the SliderAttachment
+        // above already set maxSlider's NormalisableRange to the expanded bounds. Sync displaySlider
+        // to match; checkValue won't have been called yet so it can't do this for us.
+        {
+            auto loadedMin = (float) minSlider.getMinimum();
+            auto loadedMax = (float) maxSlider.getMaximum();
+            if (loadedMax > clusterMinMax_rangeMax || loadedMin < clusterMinMax_rangeMin)
+                displaySlider->setRange(loadedMin, loadedMax, 1);
+        }
 
         /*
          * make sure we have defaultStates for the two params, so the user doesn't have to twiddle with the sliders to get defaults saved
@@ -295,6 +307,7 @@ private :
         invisibleSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
         minSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
         maxSlider.setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
+        displaySlider->setSkewFactorFromMidPoint(clusterMinMax_rangeMid);
     }
 
     int defmin, defmax;

@@ -69,6 +69,7 @@ public:
     void dragChanged();
     void tetherStiffnessChanged();
     void intervalStiffnessChanged();
+    void intervalWeightsChanged();
     void intervalScaleChanged();
     void intervalFundamentalChanged();
     void tetherScaleChanged();
