@@ -115,6 +115,12 @@ void SpringTuning::intervalStiffnessChanged()
     }
 }
 
+void SpringTuning::intervalWeightsChanged()
+{
+    for (auto spring : enabledSpringArray)
+        spring->setStrength(getSpringWeight(spring->getIntervalIndex()));
+}
+
 void SpringTuning::intervalScaleChanged()
 {
     if(sparams.scaleId->get() == TuningSystem::Custom)
@@ -255,7 +261,7 @@ void SpringTuning::simulate()
 
 double SpringTuning::getSpringWeight(int which)
 {
-    juce::String whichWeightId = "intervalWeight_" + juce::String(which);
+    juce::String whichWeightId = "intervalWeight" + juce::String(which);
     for ( auto &param_ : *sparams.getFloatParams())
     {
         if(param_->getParameterID() == whichWeightId)
