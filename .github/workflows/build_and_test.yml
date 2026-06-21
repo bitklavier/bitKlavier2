@@ -157,9 +157,15 @@ jobs:
         timeout-minutes: 5
         run: |
           # Each plugin must be code signed
-          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.VST3_PATH }}" --deep --strict --options=runtime --entitlements packaging/entitlements.entitlements --timestamp
-          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.AU_PATH }}" --deep --strict --options=runtime --entitlements packaging/entitlements.entitlements --timestamp
-          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.STANDALONE_PATH }}" --deep --strict --options=runtime --entitlements packaging/entitlements.entitlements --timestamp
+          # Sign internal binaries first to ensure entitlements are baked into the code
+          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.VST3_PATH }}/Contents/MacOS/${{ env.PRODUCT_NAME }}" --options=runtime --entitlements packaging/entitlements.entitlements --timestamp
+          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.AU_PATH }}/Contents/MacOS/${{ env.PRODUCT_NAME }}" --options=runtime --entitlements packaging/entitlements.entitlements --timestamp
+          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.STANDALONE_PATH }}/Contents/MacOS/${{ env.PRODUCT_NAME }}" --options=runtime --entitlements packaging/entitlements.entitlements --timestamp
+
+          # Then sign the outer bundles
+          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.VST3_PATH }}" --options=runtime --entitlements packaging/entitlements.entitlements --timestamp
+          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.AU_PATH }}" --options=runtime --entitlements packaging/entitlements.entitlements --timestamp
+          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.STANDALONE_PATH }}" --options=runtime --entitlements packaging/entitlements.entitlements --timestamp
 
       - name: Add Custom Icons (macOS)
         if: ${{ matrix.name == 'macOS' }}
