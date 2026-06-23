@@ -254,7 +254,12 @@ jobs:
             else
               ENVSUBST=envsubst
             fi
-            $ENVSUBST < packaging/distribution.xml.template > packaging/distribution.xml
+            if [ ! -f "distribution.xml.template" ]; then
+              echo "Error: distribution.xml.template not found in $(pwd)"
+              ls -l
+              exit 1
+            fi
+            $ENVSUBST < distribution.xml.template > distribution.xml
 
             # Build the final installer
             productbuild --resources ./resources --distribution distribution.xml --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "$OUTPUT_PKG"
