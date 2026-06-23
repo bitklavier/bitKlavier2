@@ -192,15 +192,8 @@ jobs:
         timeout-minutes: 45
         run: |
           VERSION=$(cat VERSION)
-          # Prepare scripts for individual components
-          mkdir -p packaging/pkg_scripts/resources
           
-          if [ "${{ env.INCLUDE_RESOURCES }}" = "true" ]; then
-            curl -L "https://manyarrowsmusic.com/bitKlavier/bitKlavier_InstallerResources.zip" -o "packaging/pkg_scripts/resources/resources.zip"
-            cp packaging/resources/postinstall packaging/pkg_scripts/resources/postinstall
-            chmod +x packaging/pkg_scripts/resources/postinstall
-          fi
-
+          # 1. Common package-building section
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.au.pkg" --version $VERSION --component "${{ env.AU_PATH }}" --install-location "/Library/Audio/Plug-Ins/Components"  "packaging/${{ env.PRODUCT_NAME }}.au.pkg"
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.vst3.pkg" --version $VERSION --component "${{ env.VST3_PATH }}" --install-location "/Library/Audio/Plug-Ins/VST3" "packaging/${{ env.PRODUCT_NAME }}.vst3.pkg"
 
@@ -209,62 +202,76 @@ jobs:
           plutil -replace BundleIsRelocatable -bool NO standalone.plist
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.app.pkg" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
 
-          # MTS-ESP runtime library — enables the Tuning "MTS-ESP Master" feature
-          # out of the box by installing libMTS.dylib to the system location the
-          # MTS-ESP SDK loads from. The vendored dylib is Developer-ID signed by
-          # ODDSound but lacks the hardened runtime that notarization requires, so
-          # we re-sign it with our identity (+ hardened runtime + timestamp).
+          # MTS-ESP runtime library
           MTS_ROOT="packaging/mts_root/Library/Application Support/MTS-ESP"
           mkdir -p "$MTS_ROOT"
           cp "third_party/MTS-ESP/libMTS/Mac/x86_64_ARM/libMTS.dylib" "$MTS_ROOT/libMTS.dylib"
-          # Strip any extended attributes / resource forks so codesign doesn't choke
-          # and the pkg payload stays clean (no ._ AppleDouble files).
           xattr -c "$MTS_ROOT/libMTS.dylib"
           codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION }}" -v "$MTS_ROOT/libMTS.dylib" --options=runtime --timestamp
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.mtsesp.pkg" --version $VERSION --root "packaging/mts_root" --install-location "/" "packaging/${{ env.PRODUCT_NAME }}.mtsesp.pkg"
 
+          # 2. Optional preparation of the resources component package
           if [ "${{ env.INCLUDE_RESOURCES }}" = "true" ]; then
+            mkdir -p packaging/pkg_scripts/resources
+            curl -L "https://manyarrowsmusic.com/bitKlavier/bitKlavier_InstallerResources.zip" -o "packaging/pkg_scripts/resources/resources.zip"
+            cp packaging/resources/postinstall packaging/pkg_scripts/resources/postinstall
+            chmod +x packaging/pkg_scripts/resources/postinstall
+
             # Additional Resources Component (Estimated at 1.3GB = 1153434 KB)
-            # We create an "empty" package that just runs the script
             mkdir -p packaging/empty_root
-            # Use --install-location to a dummy path that won't be seen
             pkgbuild --identifier "${{ env.BUNDLE_ID }}.resources.pkg" --version $VERSION --root packaging/empty_root --scripts packaging/pkg_scripts/resources --install-location "/tmp/.bitKlavierResources" "packaging/${{ env.PRODUCT_NAME }}.resources.pkg"
             
             # Force the installer to report 1.3GB for the resources package
-            # We do this by expanding, patching PackageInfo, and flattening
             pkgutil --expand "packaging/${{ env.PRODUCT_NAME }}.resources.pkg" "packaging/resources_expanded"
             sed -i '' 's/installKBytes="0"/installKBytes="1153434"/' "packaging/resources_expanded/PackageInfo"
             pkgutil --flatten "packaging/resources_expanded" "packaging/${{ env.PRODUCT_NAME }}.resources.pkg"
             rm -rf "packaging/resources_expanded"
-
-            export RESOURCES_CHOICE_LINE='<line choice="resources" />'
-            export RESOURCES_CHOICE_DEFINITION="<choice id=\"resources\" visible=\"true\" start_selected=\"true\" title=\"Additional Resources (Sound Samples)\"><pkg-ref id=\"${{ env.BUNDLE_ID }}.resources.pkg\" version=\"${VERSION}\" onConclusion=\"none\">${{ env.PRODUCT_NAME }}.resources.pkg</pkg-ref></choice>"
-          else
-            export RESOURCES_CHOICE_LINE=""
-            export RESOURCES_CHOICE_DEFINITION=""
           fi
 
-          # Create the distribution.xml from the template
-          export PRODUCT_NAME=${{ env.PRODUCT_NAME }}
-          export BUNDLE_ID=${{ env.BUNDLE_ID }}
-          export VERSION=$VERSION
-          # envsubst is often not in the PATH on macOS runners even after brew install gettext
-          if [ -f /usr/local/opt/gettext/bin/envsubst ]; then
-            ENVSUBST=/usr/local/opt/gettext/bin/envsubst
-          elif [ -f /opt/homebrew/opt/gettext/bin/envsubst ]; then
-            ENVSUBST=/opt/homebrew/opt/gettext/bin/envsubst
-          else
-            ENVSUBST=envsubst
-          fi
-          $ENVSUBST < packaging/distribution.xml.template > packaging/distribution.xml
+          # 3. Helper function for building the product installer
+          build_product_installer() {
+            local SUFFIX=$1
+            local INCLUDE_RES=$2
+            local OUTPUT_PKG="${{ env.ARTIFACT_NAME }}-${SUFFIX}.pkg"
 
-          # Build the final installer
-          # We run from packaging dir so relative paths in distribution.xml match
+            if [ "$INCLUDE_RES" = "true" ]; then
+              export RESOURCES_CHOICE_LINE='<line choice="resources" />'
+              export RESOURCES_CHOICE_DEFINITION="<choice id=\"resources\" visible=\"true\" start_selected=\"true\" title=\"Additional Resources (Sound Samples)\"><pkg-ref id=\"${{ env.BUNDLE_ID }}.resources.pkg\" version=\"${VERSION}\" onConclusion=\"none\">${{ env.PRODUCT_NAME }}.resources.pkg</pkg-ref></choice>"
+            else
+              export RESOURCES_CHOICE_LINE=""
+              export RESOURCES_CHOICE_DEFINITION=""
+            fi
+
+            # Create the distribution.xml from the template
+            export PRODUCT_NAME=${{ env.PRODUCT_NAME }}
+            export BUNDLE_ID=${{ env.BUNDLE_ID }}
+            export VERSION=$VERSION
+
+            if [ -f /usr/local/opt/gettext/bin/envsubst ]; then
+              ENVSUBST=/usr/local/opt/gettext/bin/envsubst
+            elif [ -f /opt/homebrew/opt/gettext/bin/envsubst ]; then
+              ENVSUBST=/opt/homebrew/opt/gettext/bin/envsubst
+            else
+              ENVSUBST=envsubst
+            fi
+            $ENVSUBST < packaging/distribution.xml.template > packaging/distribution.xml
+
+            # Build the final installer
+            productbuild --resources ./resources --distribution distribution.xml --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "$OUTPUT_PKG"
+
+            # Notarize and staple
+            xcrun notarytool submit "$OUTPUT_PKG" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
+            xcrun stapler staple "$OUTPUT_PKG"
+          }
+
           cd packaging
-          productbuild --resources ./resources --distribution distribution.xml --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg"
+          # Always build the Update-Binaries-Only installer
+          build_product_installer "Update-Binaries-Only" "false"
 
-          xcrun notarytool submit "${{ env.ARTIFACT_NAME }}.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
-          xcrun stapler staple "${{ env.ARTIFACT_NAME }}.pkg"
+          # Optionally build the Full-Installer
+          if [ "${{ env.INCLUDE_RESOURCES }}" = "true" ]; then
+            build_product_installer "Full-Installer" "true"
+          fi
 
       - name: Zip
         if: ${{ matrix.name == 'Linux' }}
@@ -322,7 +329,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ env.ARTIFACT_NAME }}.pkg
-          path: packaging/${{ env.ARTIFACT_NAME }}.pkg
+          path: packaging/${{ env.ARTIFACT_NAME }}*.pkg
 
   release:
     if: contains(github.ref, 'tags/v')
@@ -343,3 +350,4 @@ jobs:
             */*.exe
             */*.zip
             */*.dmg
+            */*.pkg
