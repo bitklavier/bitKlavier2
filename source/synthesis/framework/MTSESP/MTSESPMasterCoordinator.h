@@ -5,6 +5,8 @@
 
 #include <juce_core/juce_core.h>
 #include <juce_data_structures/juce_data_structures.h>
+#include <juce_events/juce_events.h>
+#include <array>
 #include <atomic>
 #include <functional>
 
@@ -48,11 +50,11 @@ enum class MtsStatus
  * and safe to read from any thread (e.g. a UI timer). No method touches the
  * audio thread. See docs/MTS-ESP-Master-Spec.md.
  */
-class MTSESPMasterCoordinator
+class MTSESPMasterCoordinator : private juce::Timer
 {
 public:
     MTSESPMasterCoordinator();
-    ~MTSESPMasterCoordinator();
+    ~MTSESPMasterCoordinator() override;
 
     // ---- selection (mirror of the saved intent) -----------------------------
 
@@ -93,8 +95,22 @@ public:
         tuningLookup_ = std::move (fn);
     }
 
-    /** Read the saved selection from the gallery root tree (implemented in Stage C). */
+    /**
+     * Read the saved selection from the gallery root tree (call after load).
+     * Reads IDs::mtsMasterTuningUuid, validates it still resolves to a Tuning
+     * preparation in the tree, and adopts it (clearing the selection if stale).
+     */
     void loadSelectionFromTree (const juce::ValueTree& galleryRoot);
+
+    /**
+     * Write the current selection into the gallery root tree (call before save)
+     * so it serializes with the gallery. Removes the property when nothing is
+     * selected.
+     */
+    void syncSelectionToTree (juce::ValueTree& galleryRoot) const;
+
+    /** True iff a Tuning preparation with this UUID exists anywhere in the gallery tree. */
+    static bool tuningExistsInTree (const juce::ValueTree& galleryRoot, const juce::String& uuid);
 
     /** True iff MTS-ESP support was compiled in. */
     static constexpr bool isCompiledIn() noexcept { return MTSESPMasterWrapper::isCompiledIn(); }
@@ -103,10 +119,22 @@ private:
     /** Recompute status_ from the current selection and wrapper state. */
     void updateStatus();
 
+    /** Start the publish timer when a selection exists (and MTS is compiled in); stop otherwise. */
+    void updateTimerState();
+
+    /** Publish pump (message thread): rebuild + push the selected Tuning's table. */
+    void timerCallback() override;
+
+    static constexpr int kPublishIntervalMs = 20; // ~50 Hz; tracks Spring sim smoothly
+
     MTSESPMasterWrapper wrapper_;
     juce::String selectedUuid_;                       // empty == no selection
     std::atomic<MtsStatus> status_ { MtsStatus::Off };
     std::function<TuningProcessor* (const juce::String&)> tuningLookup_;
+
+    // Publish-pump state (message thread only).
+    std::array<double, 128> lastPublished_ {};
+    bool hasPublished_ = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MTSESPMasterCoordinator)
 };

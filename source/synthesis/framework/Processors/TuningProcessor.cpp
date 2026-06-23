@@ -426,6 +426,44 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
      return lastFrequencyTarget;
 }
 
+void TuningState::fillTuningTable (double out[128])
+{
+    // Mirror getTargetFrequency()'s per-type math with currentTransposition = 0,
+    // but WITHOUT the lastFrequencyTarget / spiralNotes writes, so this is safe
+    // to call off the audio thread. adaptiveCalculate() only reads adaptive state
+    // (it multiplies adaptiveFundamentalFreq by the const adaptiveCalculateRatio),
+    // so it does not advance the adaptive algorithm here.
+    const TuningType type = getTuningType();
+
+    for (int n = 0; n < 128; ++n)
+    {
+        double freq;
+        switch (type)
+        {
+            case TuningType::Spring_Tuning:
+                freq = springTuner->getFrequency (n, getGlobalTuningReference())
+                     * intervalToRatio (getOverallOffset());
+                break;
+
+            case TuningType::Adaptive:
+            case TuningType::Adaptive_Anchored:
+                freq = adaptiveCalculate (n) * intervalToRatio (getOverallOffset());
+                break;
+
+            case TuningType::Scala_KBM:
+                freq = getScalaTargetFrequency (n, 0, false);
+                break;
+
+            case TuningType::Static:
+            default:
+                freq = getStaticTargetFrequency (n, 0, false);
+                break;
+        }
+
+        out[n] = freq;
+    }
+}
+
 template <typename Serializer>
 typename Serializer::SerializedType TuningParams::serialize (const TuningParams& paramHolder)
 {

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "MTSESPMasterCoordinator.h"
+#include "Identifiers.h"
+#include "TuningProcessor.h"
 
 MTSESPMasterCoordinator::MTSESPMasterCoordinator()
 {
@@ -10,6 +12,7 @@ MTSESPMasterCoordinator::MTSESPMasterCoordinator()
 
 MTSESPMasterCoordinator::~MTSESPMasterCoordinator()
 {
+    stopTimer();
     // The wrapper's destructor also deregisters, but be explicit: release the
     // MTS-ESP master slot before we tear down.
     wrapper_.deregisterMaster();
@@ -27,10 +30,14 @@ void MTSESPMasterCoordinator::setSelectedMasterTuningUuid (const juce::String& u
         return;
 
     selectedUuid_ = uuid;
+    hasPublished_ = false; // force an immediate publish on the next tick
 
-    // TODO(Stage E/F): register as master (if possible) and publish the selected
-    // Tuning's 128-note table via the coordinator's publish pump.
+    // TODO(Stage F): register as MTS-ESP master here and map the result into
+    // status_ (Publishing / Blocked / LibraryMissing). For now the publish pump
+    // builds + pushes the table, but wrapper_.setNoteTunings() no-ops until
+    // registration succeeds.
     updateStatus();
+    updateTimerState();
 }
 
 void MTSESPMasterCoordinator::clearSelectedMasterTuning()
@@ -39,10 +46,12 @@ void MTSESPMasterCoordinator::clearSelectedMasterTuning()
         return;
 
     selectedUuid_.clear();
+    hasPublished_ = false;
 
-    // Releasing the slot is harmless if we never claimed it (Stage B never does).
+    // Releasing the slot is harmless if we never claimed it.
     wrapper_.deregisterMaster();
     updateStatus();
+    updateTimerState();
 }
 
 bool MTSESPMasterCoordinator::isTuningSelectedAsMaster (const juce::String& uuid) const
@@ -55,8 +64,10 @@ void MTSESPMasterCoordinator::notifyTuningChanged (const juce::String& uuid)
     if (! isTuningSelectedAsMaster (uuid))
         return;
 
-    // TODO(Stage E): mark a republish pending so the publish pump pushes the
-    // updated tuning table on its next message-thread tick.
+    // Force the publish pump to re-push on its next tick. (For dynamic tuning
+    // types the pump publishes every tick anyway; this matters for static/scala
+    // types, where the pump otherwise only publishes on detected content change.)
+    hasPublished_ = false;
 }
 
 void MTSESPMasterCoordinator::notifyTuningDeleted (const juce::String& uuid)
@@ -65,10 +76,62 @@ void MTSESPMasterCoordinator::notifyTuningDeleted (const juce::String& uuid)
         clearSelectedMasterTuning();
 }
 
-void MTSESPMasterCoordinator::loadSelectionFromTree (const juce::ValueTree& /*galleryRoot*/)
+bool MTSESPMasterCoordinator::tuningExistsInTree (const juce::ValueTree& galleryRoot,
+                                                  const juce::String& uuid)
 {
-    // TODO(Stage C): read IDs::mtsMasterTuningUuid from the gallery root tree,
-    // validate it resolves to a live Tuning, and adopt it (clearing if stale).
+    if (uuid.isEmpty() || ! galleryRoot.isValid())
+        return false;
+
+    // A Tuning may live in any piano's PREPARATIONS list.
+    for (int p = 0; p < galleryRoot.getNumChildren(); ++p)
+    {
+        auto piano = galleryRoot.getChild (p);
+        if (! piano.hasType (IDs::PIANO))
+            continue;
+
+        auto preps = piano.getChildWithName (IDs::PREPARATIONS);
+        for (int i = 0; i < preps.getNumChildren(); ++i)
+        {
+            auto prep = preps.getChild (i);
+            if (prep.hasType (IDs::tuning)
+                && prep.getProperty (IDs::uuid).toString() == uuid)
+                return true;
+        }
+    }
+    return false;
+}
+
+void MTSESPMasterCoordinator::loadSelectionFromTree (const juce::ValueTree& galleryRoot)
+{
+    const juce::String saved = galleryRoot.getProperty (IDs::mtsMasterTuningUuid).toString();
+
+    // Adopt the saved selection only if it still resolves to a Tuning in the
+    // gallery; otherwise treat it as stale and clear it.
+    if (saved.isNotEmpty() && tuningExistsInTree (galleryRoot, saved))
+        selectedUuid_ = saved;
+    else
+        selectedUuid_.clear();
+
+    hasPublished_ = false;
+
+    if (selectedUuid_.isEmpty())
+        wrapper_.deregisterMaster(); // harmless if never registered
+
+    // TODO(Stage F): if a valid selection was adopted, attempt registration +
+    // initial publish here.
+    updateStatus();
+    updateTimerState();
+}
+
+void MTSESPMasterCoordinator::syncSelectionToTree (juce::ValueTree& galleryRoot) const
+{
+    if (! galleryRoot.isValid())
+        return;
+
+    if (selectedUuid_.isNotEmpty())
+        galleryRoot.setProperty (IDs::mtsMasterTuningUuid, selectedUuid_, nullptr);
+    else
+        galleryRoot.removeProperty (IDs::mtsMasterTuningUuid, nullptr);
 }
 
 void MTSESPMasterCoordinator::updateStatus()
@@ -85,10 +148,52 @@ void MTSESPMasterCoordinator::updateStatus()
         return;
     }
 
-    // Stage B: a selection exists but publishing/registration isn't wired yet.
-    // Stage F refines this into Publishing / Blocked_OtherMasterExists /
-    // LibraryMissing based on the wrapper's registration result.
+    // A selection exists. The publish pump runs, but until Stage F wires real
+    // registration the wrapper no-ops, so status stays "Selected". Stage F
+    // refines this into Publishing / Blocked_OtherMasterExists / LibraryMissing.
     status_.store (MtsStatus::Selected_NotPublishing, std::memory_order_relaxed);
+}
+
+void MTSESPMasterCoordinator::updateTimerState()
+{
+    const bool shouldRun = isCompiledIn() && selectedUuid_.isNotEmpty();
+
+    if (shouldRun && ! isTimerRunning())
+        startTimer (kPublishIntervalMs);
+    else if (! shouldRun && isTimerRunning())
+        stopTimer();
+}
+
+void MTSESPMasterCoordinator::timerCallback()
+{
+    if (selectedUuid_.isEmpty() || ! tuningLookup_)
+        return;
+
+    // Resolve the selected Tuning fresh each tick — no cached raw pointer, so a
+    // deleted/reloaded processor can never dangle here.
+    auto* proc = tuningLookup_ (selectedUuid_);
+    if (proc == nullptr)
+        return; // e.g. graph not fully built yet after a load; try again next tick
+
+    const bool dynamic = proc->isDynamicTuningType();
+
+    double table[128];
+    proc->fillTuningTable (table); // side-effect free; safe off the audio thread
+
+    bool changed = ! hasPublished_;
+    if (! changed)
+    {
+        for (int i = 0; i < 128; ++i)
+            if (table[i] != lastPublished_[i]) { changed = true; break; }
+    }
+
+    if (dynamic || changed)
+    {
+        // No-op until Stage F registers us as master; harmless to call regardless.
+        wrapper_.setNoteTunings (table);
+        std::copy (table, table + 128, lastPublished_.begin());
+        hasPublished_ = true;
+    }
 }
 
 juce::String MTSESPMasterCoordinator::statusToText (MtsStatus status)

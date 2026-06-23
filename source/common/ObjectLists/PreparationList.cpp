@@ -14,6 +14,7 @@
 #include "CommentProcessor.h"
 #include "VSTModulationBridge.h"
 #include "../UserPreferences.h"
+#include "MTSESPMasterCoordinator.h"
 
 PreparationList::PreparationList(SynthBase &parent, const juce::ValueTree &v, juce::UndoManager* um) : tracktion::engine::ValueTreeObjectList<
     PluginInstanceWrapper>(v), synth(parent) , um(um){
@@ -214,6 +215,12 @@ PluginInstanceWrapper *PreparationList::createNewObject(const juce::ValueTree &v
 }
 
 void PreparationList::deleteObject(PluginInstanceWrapper *at) {
+
+    // If the deleted preparation was selected as the MTS-ESP master, clear it.
+    // notifyTuningDeleted only reacts when the UUID matches the current
+    // selection (always a Tuning), so this is a safe no-op for other preps.
+    if (auto* mts = synth.getMTSCoordinator())
+        mts->notifyTuningDeleted (at->state.getProperty (IDs::uuid).toString());
 
     for (auto listener: listeners_)
         listener->removeModule(at);
