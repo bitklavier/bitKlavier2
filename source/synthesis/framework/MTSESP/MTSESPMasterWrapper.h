@@ -72,7 +72,7 @@ public:
     void setScaleName (const char* name);
 
     /** MTS_GetNumClients(): number of connected MTS-ESP clients. */
-    int getNumClients();
+    int getNumClients() const;
 
     /** Whether this wrapper currently believes it holds the master registration. */
     bool isMasterRegistered() const noexcept { return registered_; }

@@ -7,7 +7,7 @@
 
 MTSESPMasterCoordinator::MTSESPMasterCoordinator()
 {
-    updateStatus();
+    evaluateRegistration();
 }
 
 MTSESPMasterCoordinator::~MTSESPMasterCoordinator()
@@ -30,13 +30,11 @@ void MTSESPMasterCoordinator::setSelectedMasterTuningUuid (const juce::String& u
         return;
 
     selectedUuid_ = uuid;
-    hasPublished_ = false; // force an immediate publish on the next tick
+    hasPublished_ = false; // force an immediate publish once registered
 
-    // TODO(Stage F): register as MTS-ESP master here and map the result into
-    // status_ (Publishing / Blocked / LibraryMissing). For now the publish pump
-    // builds + pushes the table, but wrapper_.setNoteTunings() no-ops until
-    // registration succeeds.
-    updateStatus();
+    // Claim the MTS-ESP master slot now (synchronous, so the UI gets immediate
+    // status feedback). The publish pump pushes the table on its next tick.
+    evaluateRegistration();
     updateTimerState();
 }
 
@@ -48,9 +46,8 @@ void MTSESPMasterCoordinator::clearSelectedMasterTuning()
     selectedUuid_.clear();
     hasPublished_ = false;
 
-    // Releasing the slot is harmless if we never claimed it.
-    wrapper_.deregisterMaster();
-    updateStatus();
+    // evaluateRegistration() deregisters (slot released) and sets status Off.
+    evaluateRegistration();
     updateTimerState();
 }
 
@@ -101,6 +98,25 @@ bool MTSESPMasterCoordinator::tuningExistsInTree (const juce::ValueTree& gallery
     return false;
 }
 
+bool MTSESPMasterCoordinator::canReinitialize()
+{
+    return isCompiledIn()
+        && ! wrapper_.isMasterRegistered()
+        && ! wrapper_.canRegisterMaster()
+        && wrapper_.hasIPC();
+}
+
+void MTSESPMasterCoordinator::reinitializeAndRetry()
+{
+    if (! isCompiledIn())
+        return;
+
+    wrapper_.reinitialize();   // clears stale MTS-ESP shared state
+    hasPublished_ = false;
+    evaluateRegistration();    // re-attempt for the current selection
+    updateTimerState();
+}
+
 void MTSESPMasterCoordinator::loadSelectionFromTree (const juce::ValueTree& galleryRoot)
 {
     const juce::String saved = galleryRoot.getProperty (IDs::mtsMasterTuningUuid).toString();
@@ -114,12 +130,8 @@ void MTSESPMasterCoordinator::loadSelectionFromTree (const juce::ValueTree& gall
 
     hasPublished_ = false;
 
-    if (selectedUuid_.isEmpty())
-        wrapper_.deregisterMaster(); // harmless if never registered
-
-    // TODO(Stage F): if a valid selection was adopted, attempt registration +
-    // initial publish here.
-    updateStatus();
+    // Acquire/release the master slot to match the adopted selection.
+    evaluateRegistration();
     updateTimerState();
 }
 
@@ -134,7 +146,7 @@ void MTSESPMasterCoordinator::syncSelectionToTree (juce::ValueTree& galleryRoot)
         galleryRoot.removeProperty (IDs::mtsMasterTuningUuid, nullptr);
 }
 
-void MTSESPMasterCoordinator::updateStatus()
+void MTSESPMasterCoordinator::evaluateRegistration()
 {
     if (! isCompiledIn())
     {
@@ -144,14 +156,35 @@ void MTSESPMasterCoordinator::updateStatus()
 
     if (selectedUuid_.isEmpty())
     {
+        // No master wanted: release the slot if we hold it.
+        wrapper_.deregisterMaster();
         status_.store (MtsStatus::Off, std::memory_order_relaxed);
         return;
     }
 
-    // A selection exists. The publish pump runs, but until Stage F wires real
-    // registration the wrapper no-ops, so status stays "Selected". Stage F
-    // refines this into Publishing / Blocked_OtherMasterExists / LibraryMissing.
-    status_.store (MtsStatus::Selected_NotPublishing, std::memory_order_relaxed);
+    if (wrapper_.isMasterRegistered())
+    {
+        status_.store (MtsStatus::Publishing, std::memory_order_relaxed);
+        return;
+    }
+
+    if (! wrapper_.canRegisterMaster())
+    {
+        // Another app/plugin (or another bitKlavier instance) owns the slot.
+        status_.store (MtsStatus::Blocked_OtherMasterExists, std::memory_order_relaxed);
+        return;
+    }
+
+    if (wrapper_.registerMaster())
+    {
+        status_.store (MtsStatus::Publishing, std::memory_order_relaxed);
+    }
+    else
+    {
+        // canRegisterMaster() was true but registration didn't take -> the
+        // runtime libMTS library isn't installed (the SDK shim no-ops).
+        status_.store (MtsStatus::LibraryMissing, std::memory_order_relaxed);
+    }
 }
 
 void MTSESPMasterCoordinator::updateTimerState()
@@ -168,6 +201,16 @@ void MTSESPMasterCoordinator::timerCallback()
 {
     if (selectedUuid_.isEmpty() || ! tuningLookup_)
         return;
+
+    // If we don't currently hold the master slot, try to acquire it (this also
+    // refreshes status and auto-recovers from Blocked_OtherMasterExists when the
+    // other master quits). If we still can't publish, bail until the next tick.
+    if (! wrapper_.isMasterRegistered())
+    {
+        evaluateRegistration();
+        if (! wrapper_.isMasterRegistered())
+            return;
+    }
 
     // Resolve the selected Tuning fresh each tick — no cached raw pointer, so a
     // deleted/reloaded processor can never dangle here.
@@ -189,11 +232,23 @@ void MTSESPMasterCoordinator::timerCallback()
 
     if (dynamic || changed)
     {
-        // No-op until Stage F registers us as master; harmless to call regardless.
+        // We hold the master slot here, so this actually pushes to MTS-ESP
+        // clients. Dynamic types (Spring/Adaptive) publish every tick for smooth
+        // updates during sustain; static types only on detected content change.
         wrapper_.setNoteTunings (table);
         std::copy (table, table + 128, lastPublished_.begin());
         hasPublished_ = true;
     }
+}
+
+juce::String MTSESPMasterCoordinator::getStatusText() const
+{
+    if (getStatus() == MtsStatus::Publishing)
+    {
+        const int n = wrapper_.getNumClients();
+        return "Publishing (" + juce::String (n) + (n == 1 ? " client)" : " clients)");
+    }
+    return statusToText (getStatus());
 }
 
 juce::String MTSESPMasterCoordinator::statusToText (MtsStatus status)
@@ -205,7 +260,7 @@ juce::String MTSESPMasterCoordinator::statusToText (MtsStatus status)
         case MtsStatus::Off:                       return "Off";
         case MtsStatus::Selected_NotPublishing:    return "Selected";
         case MtsStatus::Publishing:                return "Publishing";
-        case MtsStatus::Blocked_OtherMasterExists: return "Blocked — another MTS-ESP master is running";
+        case MtsStatus::Blocked_OtherMasterExists: return "Blocked - another MTS-ESP master is running";
     }
     return {};
 }

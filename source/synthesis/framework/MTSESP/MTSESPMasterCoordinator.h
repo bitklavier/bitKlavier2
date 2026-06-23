@@ -76,7 +76,8 @@ public:
     // ---- status (transient runtime) -----------------------------------------
 
     MtsStatus getStatus() const { return status_.load (std::memory_order_relaxed); }
-    juce::String getStatusText() const { return statusToText (getStatus()); }
+    /** Human-readable status; when Publishing, includes the live connected-client count. */
+    juce::String getStatusText() const;
     static juce::String statusToText (MtsStatus);
 
     // ---- change / lifecycle notifications (message thread) -------------------
@@ -86,6 +87,22 @@ public:
 
     /** A Tuning was deleted; if it's the selected master, clear the selection. */
     void notifyTuningDeleted (const juce::String& uuid);
+
+    /**
+     * True when we're blocked from registering AND the block looks like stale IPC
+     * state (MTS-ESP reports a master via IPC, but we don't hold it). This is the
+     * only situation in which it is safe to offer MTS_Reinitialize(), per the
+     * ODDSound SDK. Typically caused by a plugin that crashed or was force-quit
+     * (e.g. stopping a debug run) without deregistering.
+     */
+    bool canReinitialize();
+
+    /**
+     * Clear stale MTS-ESP IPC state (MTS_Reinitialize) and re-attempt
+     * registration for the current selection. Resets MTS-ESP globally, so only
+     * call after the user confirms no other app is acting as master.
+     */
+    void reinitializeAndRetry();
 
     // ---- wiring (populated by SynthBase / later stages) ---------------------
 
@@ -116,8 +133,17 @@ public:
     static constexpr bool isCompiledIn() noexcept { return MTSESPMasterWrapper::isCompiledIn(); }
 
 private:
-    /** Recompute status_ from the current selection and wrapper state. */
-    void updateStatus();
+    /**
+     * Attempt to acquire/relinquish the MTS-ESP master slot to match the current
+     * selection, and set status_ accordingly:
+     *   - no selection      -> deregister, Off
+     *   - already registered -> Publishing
+     *   - another master     -> Blocked_OtherMasterExists
+     *   - register succeeds  -> Publishing
+     *   - register fails     -> LibraryMissing (runtime libMTS absent)
+     * Message thread only.
+     */
+    void evaluateRegistration();
 
     /** Start the publish timer when a selection exists (and MTS is compiled in); stop otherwise. */
     void updateTimerState();

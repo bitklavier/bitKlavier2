@@ -435,7 +435,12 @@ void TuningParametersView::timerCallback(void)
         if (auto* gui = interface->getGui())
         {
             if (gui->prep_popup != nullptr)
+            {
                 gui->prep_popup->repaintPrepBackground();
+                // Keep the MTS-ESP status label live (e.g. Blocked -> Publishing
+                // when another master quits) while the Tuning popup is open.
+                gui->prep_popup->updateMTSDisplay();
+            }
         }
     }
 

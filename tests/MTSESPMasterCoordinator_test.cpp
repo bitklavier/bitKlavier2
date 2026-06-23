@@ -32,6 +32,24 @@ namespace
         return gallery;
     }
 
+    // GALLERY with two PIANOs, each holding one tuning prep (by uuid).
+    juce::ValueTree makeTwoPianoGallery (const juce::String& piano1Tuning,
+                                         const juce::String& piano2Tuning)
+    {
+        juce::ValueTree gallery (IDs::GALLERY);
+        for (const auto& u : { piano1Tuning, piano2Tuning })
+        {
+            juce::ValueTree piano (IDs::PIANO);
+            juce::ValueTree preps (IDs::PREPARATIONS);
+            juce::ValueTree tuning (IDs::tuning);
+            tuning.setProperty (IDs::uuid, u, nullptr);
+            preps.appendChild (tuning, nullptr);
+            piano.appendChild (preps, nullptr);
+            gallery.appendChild (piano, nullptr);
+        }
+        return gallery;
+    }
+
     const juce::String kUuidA = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
     const juce::String kUuidB = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
 }
@@ -109,6 +127,21 @@ TEST_CASE ("MTS-ESP coordinator: stale selection cleared on load", "[mtsesp]")
     CHECK (! coord.hasSelection());
     if (MTSESPMasterCoordinator::isCompiledIn())
         CHECK (coord.getStatus() == MtsStatus::Off);
+}
+
+TEST_CASE ("MTS-ESP coordinator: master Tuning in a non-first piano", "[mtsesp]")
+{
+    // The master Tuning lives in the SECOND piano — exercises the cross-piano
+    // search in tuningExistsInTree / loadSelectionFromTree.
+    auto gallery = makeTwoPianoGallery (kUuidA, kUuidB);
+
+    CHECK (MTSESPMasterCoordinator::tuningExistsInTree (gallery, kUuidA));
+    CHECK (MTSESPMasterCoordinator::tuningExistsInTree (gallery, kUuidB));
+
+    gallery.setProperty (IDs::mtsMasterTuningUuid, kUuidB, nullptr);
+    MTSESPMasterCoordinator coord;
+    coord.loadSelectionFromTree (gallery);
+    CHECK (coord.getSelectedMasterTuningUuid() == kUuidB);
 }
 
 TEST_CASE ("MTS-ESP coordinator: deletion clears matching selection", "[mtsesp]")

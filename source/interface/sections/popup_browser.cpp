@@ -1559,9 +1559,37 @@ void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
         // Exclusive toggle: clicking the current master clears it; clicking any
         // other Tuning makes it the master (implicitly deselecting the previous).
         if (coord->isTuningSelectedAsMaster(uuid))
+        {
             coord->clearSelectedMasterTuning();
+        }
         else
+        {
             coord->setSelectedMasterTuningUuid(uuid);
+
+            // If we couldn't register because of stale IPC state (a master left
+            // registered by a crashed/force-quit plugin), offer to reinitialize.
+            if (coord->getStatus() == MtsStatus::Blocked_OtherMasterExists && coord->canReinitialize())
+            {
+                juce::AlertWindow::showOkCancelBox(
+                    juce::MessageBoxIconType::WarningIcon,
+                    "MTS-ESP master unavailable",
+                    "Couldn't become the MTS-ESP master because a master is already registered.\n\n"
+                    "This is often stale state left by a plugin that crashed or was force-quit "
+                    "(for example, stopping a debug run) without releasing MTS-ESP. If you are sure "
+                    "no other application is acting as the MTS-ESP master, you can reinitialize "
+                    "MTS-ESP and take over.",
+                    "Reinitialize & take over",
+                    "Cancel",
+                    nullptr,
+                    juce::ModalCallbackFunction::create([this](int result) {
+                        if (result == 1)
+                            if (auto* p = findParentComponentOfClass<SynthGuiInterface>())
+                                if (p->getSynth() != nullptr && p->getSynth()->getMTSCoordinator() != nullptr)
+                                    p->getSynth()->getMTSCoordinator()->reinitializeAndRetry();
+                        updateMTSDisplay();
+                    }));
+            }
+        }
 
         // Persist into the live gallery tree (also marks the gallery dirty so
         // the selection is offered for save).

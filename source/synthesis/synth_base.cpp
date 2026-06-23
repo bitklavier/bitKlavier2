@@ -168,6 +168,11 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
 
 SynthBase::~SynthBase()
 {
+    // Tear the MTS-ESP coordinator down first: stops its publish timer and
+    // releases the MTS-ESP master slot while the engine/tree it references are
+    // still alive (parallels the old Gallery::deregisterMTS on shutdown).
+    mtsCoordinator_.reset();
+
     tree.removeListener (this);
     um.clearUndoHistory();
 }

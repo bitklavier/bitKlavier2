@@ -90,7 +90,7 @@ void MTSESPMasterWrapper::setScaleName (const char* name)
    #endif
 }
 
-int MTSESPMasterWrapper::getNumClients()
+int MTSESPMasterWrapper::getNumClients() const
 {
    #if BITKLAVIER_ENABLE_MTS_ESP
     return MTS_GetNumClients();
