@@ -50,6 +50,7 @@
 #include "EQProcessor.h"
 #include "CompressorProcessor.h"
 #include "ReverbProcessor.h"
+#include "MTSESPMasterCoordinator.h"
 
 // For saving last opened gallery path
 #include "UserPreferences.h"
@@ -131,6 +132,11 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
             *this, tree.getChildWithName (IDs::PIANO).getChildWithName (IDs::MODCONNECTIONS)));
     engine_ = std::make_unique<bitklavier::SoundEngine>(*this,tree);
     engine_->addDefaultChain(*this,tree);
+
+    // One MTS-ESP master coordinator per plugin instance. Owns the (compile-time
+    // optional) MTS-ESP master lifecycle; in Stage B it only tracks selection and
+    // status. See docs/MTS-ESP-Master-Spec.md.
+    mtsCoordinator_ = std::make_unique<MTSESPMasterCoordinator>();
 
     sample_index_of_switch = 0;
     total_samples_passed = 0;

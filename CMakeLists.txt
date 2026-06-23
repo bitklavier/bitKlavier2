@@ -198,6 +198,7 @@ target_include_directories(SharedCode
         source/synthesis
         source/synthesis/framework
         source/synthesis/framework/Processors
+        source/synthesis/framework/MTSESP
         source/synthesis/framework/ParamHolders
         source/synthesis/framework/Synthesiser
         #interface includes

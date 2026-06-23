@@ -33,6 +33,7 @@ template<typename T>
 class BKSamplerSound;
 class PreparationList;
 class SampleLoadManager;
+class MTSESPMasterCoordinator;
 
 class BKSynthesiserSound;
 namespace bitklavier {
@@ -61,6 +62,9 @@ public:
 
     bitklavier::SoundEngine *getEngine() { return engine_.get(); }
     juce::MidiKeyboardState *getKeyboardState() { return keyboard_state_.get(); }
+
+    /** Plugin-instance-level owner of MTS-ESP master publishing. Always non-null. */
+    MTSESPMasterCoordinator *getMTSCoordinator() { return mtsCoordinator_.get(); }
 
     int getSampleRate();
     int getBufferSize();
@@ -297,6 +301,7 @@ protected:
     std::unique_ptr<bitklavier::SoundEngine> engine_;
     std::unique_ptr<MidiManager> midi_manager_;
     std::unique_ptr<juce::MidiKeyboardState> keyboard_state_;
+    std::unique_ptr<MTSESPMasterCoordinator> mtsCoordinator_;
 
     std::shared_ptr<SynthBase *> self_reference_;
 
