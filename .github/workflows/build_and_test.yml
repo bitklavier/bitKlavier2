@@ -270,6 +270,9 @@ jobs:
           }
 
           cd packaging
+          # Clean up any existing pkg files to avoid confusion
+          rm -f *.pkg
+          
           # Always build the Update-Binaries-Only installer
           build_product_installer "Update-Binaries-Only" "false"
 
@@ -333,7 +336,7 @@ jobs:
         if: ${{ matrix.name == 'macOS' }}
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ env.ARTIFACT_NAME }}.pkg
+          name: ${{ env.ARTIFACT_NAME }}-installers
           path: packaging/${{ env.ARTIFACT_NAME }}*.pkg
 
   release:
