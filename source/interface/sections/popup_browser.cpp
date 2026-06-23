@@ -28,6 +28,7 @@
 #include "PreparationSection.h"
 #include "TuningParametersView.h"
 #include "SampleLoadManager.h"
+#include "MTSESPMasterCoordinator.h"
 
 namespace {
     template<class Comparator>
@@ -1360,6 +1361,24 @@ PreparationPopup::PreparationPopup(bool ismod) : SynthSection("prep_popup"),
     resetModsText_->setJustification(juce::Justification::centred);
     resetModsText_->setVisible(!ismod);
 
+    // MTS-ESP master controls (Tuning preps only; hidden until a Tuning is shown).
+    mtsButton_ = std::make_unique<juce::ShapeButton>("MTSMaster", juce::Colour(0xff666666),
+                                                     juce::Colour(0xffaaaaaa), juce::Colour(0xff888888));
+    addAndMakeVisible(mtsButton_.get());
+    mtsButton_->addListener(this);
+    mtsButton_->setTriggeredOnMouseDown(true);
+    mtsButton_->setShape(juce::Path(), true, true, true);
+    mtsButton_->setVisible(false);
+    mtsButton_->setTooltip("Make this Tuning the MTS-ESP master source. Only one Tuning can be master at a time.");
+    mtsButtonText_ = std::make_shared<PlainTextComponent>("MTS Master Text", "Set MTS-ESP Master");
+    addOpenGlComponent(mtsButtonText_);
+    mtsButtonText_->setJustification(juce::Justification::centred);
+    mtsButtonText_->setVisible(false);
+    mtsStatusText_ = std::make_shared<PlainTextComponent>("MTS Status Text", "");
+    addOpenGlComponent(mtsStatusText_);
+    mtsStatusText_->setJustification(juce::Justification::centredLeft);
+    mtsStatusText_->setVisible(false);
+
     constrainer.setMinimumOnscreenAmounts(0xffffff, 0xffffff, 0xffffff, 0xffffff);
 }
 
@@ -1437,6 +1456,9 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
 
     //prepSelectText->setText(curr_vt.getProperty(IDs::name).toString());
 
+    // Reflect the MTS-ESP master selection for this prep (Tuning only).
+    updateMTSDisplay();
+
     /*
      * looking for all the other preps of this same type in the full gallery
      * so we can populate a menu for the user to choose from, should they
@@ -1454,6 +1476,39 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
 }
 
 
+
+void PreparationPopup::updateMTSDisplay() {
+    const bool isTuning = curr_vt.isValid() && curr_vt.getType() == IDs::tuning;
+    mtsButton_->setVisible(isTuning);
+    mtsButtonText_->setVisible(isTuning);
+    mtsStatusText_->setVisible(isTuning);
+
+    if (! isTuning)
+        return;
+
+    auto* parent = findParentComponentOfClass<SynthGuiInterface>();
+    if (parent == nullptr || parent->getSynth() == nullptr)
+        return;
+    auto* coord = parent->getSynth()->getMTSCoordinator();
+    if (coord == nullptr)
+        return;
+
+    const juce::String uuid = curr_vt.getProperty(IDs::uuid).toString();
+    const bool thisIsMaster = coord->isTuningSelectedAsMaster(uuid);
+
+    mtsButtonText_->setText(thisIsMaster ? "MTS-ESP Master: ON" : "Set MTS-ESP Master");
+
+    juce::String status;
+    if (! MTSESPMasterCoordinator::isCompiledIn())
+        status = "disabled in build";
+    else if (thisIsMaster)
+        status = coord->getStatusText();
+    else if (coord->hasSelection())
+        status = "another Tuning is master";
+    else
+        status = "off";
+    mtsStatusText_->setText(status);
+}
 
 void PreparationPopup::reset() {
     sampleSelector->setVisible(true);
@@ -1489,6 +1544,60 @@ void PreparationPopup::repaintPrepBackground() {
 void PreparationPopup::buttonClicked(juce::Button *clicked_button) {
     if (clicked_button == exit_button_.get()) {
         reset();
+    } else if (clicked_button == mtsButton_.get()) {
+        if (! curr_vt.isValid() || ! MTSESPMasterCoordinator::isCompiledIn())
+            return;
+        auto* parent = findParentComponentOfClass<SynthGuiInterface>();
+        if (parent == nullptr || parent->getSynth() == nullptr)
+            return;
+        auto* coord = parent->getSynth()->getMTSCoordinator();
+        if (coord == nullptr)
+            return;
+
+        const juce::String uuid = curr_vt.getProperty(IDs::uuid).toString();
+
+        // Exclusive toggle: clicking the current master clears it; clicking any
+        // other Tuning makes it the master (implicitly deselecting the previous).
+        if (coord->isTuningSelectedAsMaster(uuid))
+        {
+            coord->clearSelectedMasterTuning();
+        }
+        else
+        {
+            coord->setSelectedMasterTuningUuid(uuid);
+
+            // If we couldn't register because of stale IPC state (a master left
+            // registered by a crashed/force-quit plugin), offer to reinitialize.
+            if (coord->getStatus() == MtsStatus::Blocked_OtherMasterExists && coord->canReinitialize())
+            {
+                juce::AlertWindow::showOkCancelBox(
+                    juce::MessageBoxIconType::WarningIcon,
+                    "MTS-ESP master unavailable",
+                    "Couldn't become the MTS-ESP master because a master is already registered.\n\n"
+                    "This is often stale state left by a plugin that crashed or was force-quit "
+                    "(for example, stopping a debug run) without releasing MTS-ESP. If you are sure "
+                    "no other application is acting as the MTS-ESP master, you can reinitialize "
+                    "MTS-ESP and take over.",
+                    "Reinitialize & take over",
+                    "Cancel",
+                    nullptr,
+                    juce::ModalCallbackFunction::create([this](int result) {
+                        if (result == 1)
+                            if (auto* p = findParentComponentOfClass<SynthGuiInterface>())
+                                if (p->getSynth() != nullptr && p->getSynth()->getMTSCoordinator() != nullptr)
+                                    p->getSynth()->getMTSCoordinator()->reinitializeAndRetry();
+                        updateMTSDisplay();
+                    }));
+            }
+        }
+
+        // Persist into the live gallery tree (also marks the gallery dirty so
+        // the selection is offered for save).
+        auto root = curr_vt.getRoot();
+        coord->syncSelectionToTree(root);
+
+        updateMTSDisplay();
+        resized();
     } else if (clicked_button == resetModsButton_.get()) {
         if (curr_vt.isValid()) {
             SynthGuiInterface *parent = findParentComponentOfClass<SynthGuiInterface>();
@@ -1638,6 +1747,19 @@ void PreparationPopup::resized() {
     {
         int label_height = findValue(Skin::kLabelBackgroundHeight);
         float label_text_height = findValue(Skin::kLabelHeight);
+
+        // MTS-ESP master controls (Tuning preps) occupy the same header slot as
+        // the soundset selector, which is hidden for Tuning. Lay them out from a
+        // copy so the (invisible-for-Tuning) soundset bounds below still resolve.
+        {
+            juce::Rectangle<int> mtsRow = header_bounds;
+            mtsButton_->setBounds(mtsRow.removeFromLeft(150).reduced(5));
+            mtsButtonText_->setBounds(mtsButton_->getBounds());
+            mtsButtonText_->setTextSize(label_text_height);
+            mtsRow.removeFromLeft(8);
+            mtsStatusText_->setBounds(mtsRow.removeFromLeft(240).reduced(5));
+            mtsStatusText_->setTextSize(label_text_height);
+        }
 
         //sampleSelector->setBounds(exit_button_->getRight() + 10, exit_button_->getY(), 100, label_height);
         sampleSelector->setBounds(header_bounds.removeFromLeft(100).reduced(5));

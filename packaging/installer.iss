@@ -13,6 +13,7 @@ Name: "custom"; Description: "Custom installation"; Flags: iscustom
 [Components]
 Name: "standalone"; Description: "Standalone application"; Types: full custom
 Name: "vst3"; Description: "VST3 plugin"; Types: full custom
+Name: "mtsesp"; Description: "MTS-ESP tuning library (for Tuning MTS-ESP Master)"; Types: full custom
 
 [Setup]
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -36,6 +37,9 @@ Type: filesandordirs; Name: "{commoncf64}\VST3\{#ProductName}Data"
 [Files]
 Source: "..\Builds\{#ProjectName}_artefacts\Release\VST3\{#ProductName}.vst3\*"; DestDir: "{commoncf64}\VST3\{#ProductName}.vst3\"; Excludes: *.ilk; Flags: ignoreversion recursesubdirs; Components: vst3
 Source: "..\Builds\{#ProjectName}_artefacts\Release\Standalone\{#ProductName}.exe"; DestDir: "{commonpf64}\{#Publisher}\{#ProductName}"; Flags: ignoreversion; Components: standalone
+; MTS-ESP runtime library — installed to the Common Files location the MTS-ESP SDK loads from.
+; Shared infrastructure: intentionally NOT removed on uninstall (other plugins may use it).
+Source: "..\third_party\MTS-ESP\libMTS\Win\64bit\LIBMTS.dll"; DestDir: "{commoncf64}\MTS-ESP"; Flags: ignoreversion; Components: mtsesp
 
 [Icons]
 Name: "{autoprograms}\{#ProductName}"; Filename: "{commonpf64}\{#Publisher}\{#ProductName}\{#ProductName}.exe"; Components: standalone

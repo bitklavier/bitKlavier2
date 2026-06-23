@@ -198,6 +198,7 @@ target_include_directories(SharedCode
         source/synthesis
         source/synthesis/framework
         source/synthesis/framework/Processors
+        source/synthesis/framework/MTSESP
         source/synthesis/framework/ParamHolders
         source/synthesis/framework/Synthesiser
         #interface includes
@@ -243,6 +244,33 @@ target_compile_definitions(SharedCode
     # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
     PRODUCT_NAME_WITHOUT_VERSION="bitKlavier5"
 )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MTS-ESP master / publishing support (optional, default ON)
+#
+# Vendored ODDSound SDK lives in third_party/MTS-ESP/. The SDK wrapper
+# (libMTSMaster.cpp) dynamically loads the runtime libMTS library at startup and
+# degrades to no-ops if it isn't installed, so enabling this is safe even on
+# machines without MTS-ESP installed. When OFF, the SDK is not compiled and all
+# bitKlavier MTS code (added in later stages) compiles to no-ops.
+#
+# See docs/MTS-ESP-Master-Spec.md for the full design.
+# ─────────────────────────────────────────────────────────────────────────────
+option(BITKLAVIER_ENABLE_MTS_ESP "Build with MTS-ESP master/publishing support" ON)
+
+if(BITKLAVIER_ENABLE_MTS_ESP)
+    message(STATUS "MTS-ESP master support: ENABLED")
+    target_sources(SharedCode INTERFACE
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/MTS-ESP/libMTSMaster.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/MTS-ESP/libMTSClient.cpp")
+    target_include_directories(SharedCode INTERFACE
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/MTS-ESP")
+    target_compile_definitions(SharedCode INTERFACE BITKLAVIER_ENABLE_MTS_ESP=1)
+else()
+    message(STATUS "MTS-ESP master support: DISABLED")
+    target_compile_definitions(SharedCode INTERFACE BITKLAVIER_ENABLE_MTS_ESP=0)
+endif()
 
 
 # Link to any other modules you added (with juce_add_module) here!

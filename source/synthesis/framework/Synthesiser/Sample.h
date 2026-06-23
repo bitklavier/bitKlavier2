@@ -1228,9 +1228,12 @@ private:
          * otherwise change only at noteOn
          */
         if(tuning != nullptr ) {
-            if (tuning->getTuningType() == Spring_Tuning)
+            if (tuning->getTuningType() == Spring_Tuning || tuning->getTuningType() == MTS_Client)
             {
                 // continuous, with frequency updated every block
+                //  - Spring_Tuning: the spring sim evolves the pitch during sustain
+                //  - MTS_Client: the external MTS-ESP master may retune during sustain
+                // (re-querying MTS_NoteToFrequency every block is lock-free / audio-safe)
                 sampleIncrement.setTargetValue (
                     getTargetFrequency() / samplerSound->getCentreFrequencyInHz() *
                     samplerSound->getSample()->getSampleRate() / this->currentSampleRate);

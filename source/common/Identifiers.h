@@ -159,6 +159,9 @@ namespace IDs
 
     DECLARE_ID(global_A440)
     DECLARE_ID(global_tempo_multiplier)
+    // Gallery-wide: UUID of the Tuning preparation selected as the MTS-ESP master
+    // source. Empty/absent = none. Only one Tuning per gallery may be the master.
+    DECLARE_ID(mtsMasterTuningUuid)
     DECLARE_ID(defaultMidiInput)
     DECLARE_ID(connectedPrep)
 }

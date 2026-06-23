@@ -50,6 +50,7 @@
 #include "EQProcessor.h"
 #include "CompressorProcessor.h"
 #include "ReverbProcessor.h"
+#include "MTSESPMasterCoordinator.h"
 
 // For saving last opened gallery path
 #include "UserPreferences.h"
@@ -132,12 +133,46 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     engine_ = std::make_unique<bitklavier::SoundEngine>(*this,tree);
     engine_->addDefaultChain(*this,tree);
 
+    // One MTS-ESP master coordinator per plugin instance. Owns the (compile-time
+    // optional) MTS-ESP master lifecycle and the message-thread publish pump.
+    // See docs/MTS-ESP-Master-Spec.md.
+    mtsCoordinator_ = std::make_unique<MTSESPMasterCoordinator>();
+    // Resolve a Tuning UUID to its live processor for the publish pump. Tuning
+    // preps exist in the graph regardless of which piano is active, so the master
+    // keeps publishing across piano switches. Resolved fresh each call (no cached
+    // pointer) so a deleted/reloaded processor can't dangle.
+    mtsCoordinator_->setTuningLookup ([this] (const juce::String& uuid) -> TuningProcessor* {
+        if (uuid.isEmpty())
+            return nullptr;
+        for (auto pianoVt : tree)
+        {
+            if (! pianoVt.hasType (IDs::PIANO))
+                continue;
+            auto prep = pianoVt.getChildWithName (IDs::PREPARATIONS)
+                               .getChildWithProperty (IDs::uuid, uuid);
+            if (prep.isValid())
+            {
+                const auto nodeID = juce::VariantConverter<juce::AudioProcessorGraph::NodeID>::fromVar (
+                    prep.getProperty (IDs::nodeID));
+                if (auto* node = getNodeForId (nodeID))
+                    return dynamic_cast<TuningProcessor*> (node->getProcessor());
+                return nullptr;
+            }
+        }
+        return nullptr;
+    });
+
     sample_index_of_switch = 0;
     total_samples_passed = 0;
 }
 
 SynthBase::~SynthBase()
 {
+    // Tear the MTS-ESP coordinator down first: stops its publish timer and
+    // releases the MTS-ESP master slot while the engine/tree it references are
+    // still alive (parallels the old Gallery::deregisterMTS on shutdown).
+    mtsCoordinator_.reset();
+
     tree.removeListener (this);
     um.clearUndoHistory();
 }
@@ -672,6 +707,11 @@ bool SynthBase::loadFromValueTree (const juce::ValueTree& state)
     if (engine_ != nullptr)
         engine_->loadBusProcessorsFromValueTree (tree);
 
+    // Adopt the saved MTS-ESP master Tuning selection (clears it if the Tuning
+    // no longer exists in the loaded gallery).
+    if (mtsCoordinator_ != nullptr)
+        mtsCoordinator_->loadSelectionFromTree (tree);
+
     juce::MessageManager::callAsync ([this] { flushPendingConnections(); });
 
     setBatchLoading(false);
@@ -945,6 +985,10 @@ bool SynthBase::saveToFile(juce::File preset)
     // sync bus processors (EQ, Compressor, Reverb) directly to their valuetrees
     if (engine_ != nullptr)
         engine_->syncBusProcessorsToValueTree (tree);
+
+    // persist the selected MTS-ESP master Tuning UUID onto the gallery root
+    if (mtsCoordinator_ != nullptr)
+        mtsCoordinator_->syncSelectionToTree (tree);
 
     auto xml = getValueTree().createXml();
     if (xml == nullptr)

@@ -21,6 +21,7 @@
 #include "SpringTuningParams.h"
 #include "OffsetKnobParam.h"
 #include "SpringTuning/SpringTuning.h"
+#include "MTSESPClientWrapper.h"
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 #include "Tunings.h"
@@ -60,6 +61,32 @@ struct TuningState : bitklavier::StateChangeableParameter
 
     double getOverallOffset();
     double getTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
+
+    /**
+     * Whether this tuning type changes continuously (Spring/Adaptive) and so must
+     * be republished to MTS-ESP on a timer, vs. static types (Static/Scala) that
+     * only change on edits. Used by the MTS-ESP master coordinator.
+     */
+    bool isDynamicTuningType() const noexcept
+    {
+        const auto t = getTuningType();
+        return t == TuningType::Spring_Tuning
+            || t == TuningType::Adaptive
+            || t == TuningType::Adaptive_Anchored;
+    }
+
+    /**
+     * Fill a 128-entry table with the current per-MIDI-note frequencies (Hz) for
+     * the active tuning type, using the current global A4 reference.
+     *
+     * SIDE-EFFECT FREE: unlike getTargetFrequency(), this does NOT write
+     * lastFrequencyTarget / spiralNotes / adaptive state, so it is safe to call
+     * from the message thread (e.g. the MTS-ESP publish timer) while the audio
+     * thread calls getTargetFrequency(). It only reads atomic offset arrays,
+     * parameters, the (lock-protected) spring tuner, and the scala tables — all
+     * of which tolerate a concurrent reader.
+     */
+    void fillTuningTable (double out[128]);
     double getStaticTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
     double getScalaTargetFrequency (int currentlyPlayingNote, double currentTransposition, bool tuneTranspositions);
     void updateLastFrequency(double lastFreq);
@@ -143,6 +170,14 @@ struct TuningState : bitklavier::StateChangeableParameter
     OffsetKnobParam offsetKnobParam;
 
     std::unique_ptr<SpringTuning> springTuner;
+
+    /**
+     * MTS-ESP client (receive mode). Used when tuningType == MTS_Client to read
+     * per-note frequencies from a connected MTS-ESP master. Queried on the audio
+     * thread in getTargetFrequency(); registered/deregistered on the message
+     * thread by TuningProcessor.
+     */
+    MTSESPClientWrapper mtsClient;
 
     std::array<std::atomic<float>, 128> spiralNotes; // store all the currently sounding frequencies here, by note, for the spiral display
 
@@ -324,8 +359,16 @@ public:
         if (parent.getEngine() != nullptr)
         {
             parent.pauseProcessing(true);
+            // Release the MTS-ESP client (if any) while audio is paused, so the
+            // audio thread can't query a freed handle.
+            state.params.tuningState.mtsClient.deregisterClient();
             listeners.call ([] (TuningListener& l) { l.tuningStateInvalidated(); });
             parent.pauseProcessing(false);
+        }
+        else
+        {
+            // No engine/audio running — safe to release directly.
+            state.params.tuningState.mtsClient.deregisterClient();
         }
     }
 
@@ -359,6 +402,11 @@ public:
     void addListener (TuningListener* l)  { listeners.add (l); }
     void removeListener (TuningListener* l) { listeners.remove (l); }
     juce::ListenerList<TuningListener> listeners;
+
+    // --- MTS-ESP master support (see MTSESPMasterCoordinator) ---
+    // Both are message-thread safe; they only read tuning state.
+    bool isDynamicTuningType() { return state.params.tuningState.isDynamicTuningType(); }
+    void fillTuningTable (double out[128]) { state.params.tuningState.fillTuningTable (out); }
 
 private:
     chowdsp::ScopedCallbackList tuningCallbacks;

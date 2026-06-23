@@ -108,6 +108,10 @@ public:
         soundfontPresetSelectText->setVisible(false);
     }
 
+    // Show/refresh the MTS-ESP master controls in the header. Visible only for
+    // Tuning preparations; reflects the coordinator's current selection/status.
+    void updateMTSDisplay();
+
     void repaintBackground() override
     {
     }
@@ -131,6 +135,13 @@ juce::ValueTree curr_vt;
 
     std::unique_ptr<juce::ShapeButton> resetModsButton_;
     std::shared_ptr<PlainTextComponent> resetModsText_;
+
+    // MTS-ESP master selection (Tuning preps only). mtsButton_ is an invisible
+    // clickable shape with mtsButtonText_ drawn over it (same pattern as the
+    // soundset selector); mtsStatusText_ shows the runtime status to its right.
+    std::unique_ptr<juce::ShapeButton> mtsButton_;
+    std::shared_ptr<PlainTextComponent> mtsButtonText_;
+    std::shared_ptr<PlainTextComponent> mtsStatusText_;
 
     /*
      * omit prepSelector for now

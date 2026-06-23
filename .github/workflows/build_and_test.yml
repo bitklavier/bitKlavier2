@@ -104,7 +104,7 @@ jobs:
           xcode-version: latest-stable
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -208,6 +208,20 @@ jobs:
           pkgbuild --analyze --root "$(dirname "${{ env.STANDALONE_PATH }}")" standalone.plist
           plutil -replace BundleIsRelocatable -bool NO standalone.plist
           pkgbuild --identifier "${{ env.BUNDLE_ID }}.app.pkg" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
+
+          # MTS-ESP runtime library — enables the Tuning "MTS-ESP Master" feature
+          # out of the box by installing libMTS.dylib to the system location the
+          # MTS-ESP SDK loads from. The vendored dylib is Developer-ID signed by
+          # ODDSound but lacks the hardened runtime that notarization requires, so
+          # we re-sign it with our identity (+ hardened runtime + timestamp).
+          MTS_ROOT="packaging/mts_root/Library/Application Support/MTS-ESP"
+          mkdir -p "$MTS_ROOT"
+          cp "third_party/MTS-ESP/libMTS/Mac/x86_64_ARM/libMTS.dylib" "$MTS_ROOT/libMTS.dylib"
+          # Strip any extended attributes / resource forks so codesign doesn't choke
+          # and the pkg payload stays clean (no ._ AppleDouble files).
+          xattr -c "$MTS_ROOT/libMTS.dylib"
+          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION }}" -v "$MTS_ROOT/libMTS.dylib" --options=runtime --timestamp
+          pkgbuild --identifier "${{ env.BUNDLE_ID }}.mtsesp.pkg" --version $VERSION --root "packaging/mts_root" --install-location "/" "packaging/${{ env.PRODUCT_NAME }}.mtsesp.pkg"
 
           if [ "${{ env.INCLUDE_RESOURCES }}" = "true" ]; then
             # Additional Resources Component (Estimated at 1.3GB = 1153434 KB)

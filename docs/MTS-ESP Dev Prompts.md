@@ -10,9 +10,10 @@ Tuning UI/state integration
 Publishing/update behavior
 Testing/review
 
-```
+
 Prompt 1 — Initial architecture review, no edits
-Use this first. It asks the assistant to understand the current project and produce a plan without touching files.``` text
+Use this first. It asks the assistant to understand the current project and produce a plan without touching files.
+``` text
 I want to integrate MTS-ESP master/publishing functionality into bitKlavier’s Tuning preparation.
 
 Important design constraints:
@@ -47,9 +48,10 @@ Please answer with:
 Do not edit files yet.
 ```
 
-```
+
 Prompt 2 — Compare old bitKlavier implementation
-Use this after making the old source code available to the assistant.``` text
+Use this after making the old source code available to the assistant.
+``` text
 I have an older bitKlavier implementation that included MTS-ESP support. Please inspect the old implementation and compare it to the current bitKlavier Tuning architecture.
 
 Design goal for the new implementation:
@@ -83,9 +85,9 @@ Include:
 Do not edit files yet.
 ```
 
-```
 Prompt 3 — Write the implementation spec
-This prompt is good for AIR or Claude after the architecture review. It produces a durable spec you can keep in docs/ or memory/.``` text
+This prompt is good for AIR or Claude after the architecture review. It produces a durable spec you can keep in docs/ or memory/.
+``` text
 Based on the current bitKlavier architecture and the old MTS-ESP implementation, please write a concise implementation specification for “MTS-ESP Master support in Tuning preparations.”
 
 The spec should assume:
@@ -118,11 +120,11 @@ Please include:
 13. Staged implementation checklist.
 
 Do not edit code.
-```
 
 ```
 Prompt 4 — Build-system integration only
-Use this when you’re ready to start coding. Keep this isolated.``` text
+Use this when you’re ready to start coding. Keep this isolated.
+``` text
 Please implement only the build-system/dependency preparation for optional MTS-ESP support.
 
 Constraints:
@@ -146,11 +148,11 @@ Please:
 5. Report any compile errors or API uncertainties.
 
 Do not touch Tuning UI or runtime behavior in this step.
-```
 
 ```
 Prompt 5 — Add no-op coordinator/wrapper skeleton
-This is a safe next step before real MTS calls.``` text
+This is a safe next step before real MTS calls.
+``` text
 Please add a no-op MTS-ESP master coordinator/wrapper skeleton, without yet calling the real MTS-ESP API unless it is already clearly available.
 
 Design:
@@ -190,9 +192,9 @@ Please implement:
 Keep real MTS-ESP API calls stubbed unless the API is obvious and safe.
 ```
 
-```
 Prompt 6 — Add saved selected-Tuning UUID state
-This step establishes the exclusive-selection model.``` text
+This step establishes the exclusive-selection model.
+``` text
 Please implement saved state for selecting one Tuning preparation as the MTS-ESP master source.
 
 Design constraints:
@@ -218,9 +220,9 @@ Please implement:
 Be careful with ValueTree setProperty reentrancy: if multiple properties are updated, snapshot needed values before the first setProperty call.
 ```
 
-```
 Prompt 7 — Add Tuning UI control and status display
-Use after the coordinator and state exist.``` text
+Use after the coordinator and state exist.
+``` text
 Please add UI controls to the Tuning preparation for MTS-ESP master selection.
 
 User-facing behavior:
@@ -253,9 +255,9 @@ Please include:
 Do not implement real MTS-ESP publishing unless the coordinator already supports it.
 ```
 
-```
 Prompt 8 — Connect Tuning changes to publish requests
-This is where actual music data starts flowing, but still possibly with a no-op wrapper.``` text
+This is where actual music data starts flowing, but still possibly with a no-op wrapper.
+``` text
 Please connect Tuning changes to the MTS-ESP master coordinator’s publish/update mechanism.
 
 Design constraints:
@@ -286,9 +288,9 @@ Please implement:
    - delete selected Tuning -> publishing stops
 ```
 
-```
 Prompt 9 — Implement real MTS-ESP master publishing
-Use this only after the wrapper and coordinator are in place.``` text
+Use this only after the wrapper and coordinator are in place.
+``` text
 Please implement real MTS-ESP master/publishing calls inside the MTS-ESP wrapper only.
 
 Important:
@@ -313,9 +315,9 @@ Please inspect the vendored/current MTS-ESP API and implement:
 After implementation, build and report results.
 ```
 
-```
 Prompt 10 — Lifecycle and edge-case pass
-Use after the basic feature works.``` text
+Use after the basic feature works.
+``` text
 Please review and harden the MTS-ESP master integration.
 
 Check these cases:
@@ -348,9 +350,9 @@ Pay special attention to:
 - no inconsistent saved state
 ```
 
-```
 Prompt 11 — Final code review for audio-thread safety
-This one is important.``` text
+This one is important.
+``` text
 Please perform a focused audio-thread-safety review of the MTS-ESP master integration.
 
 Assume that MTS-ESP calls may involve shared memory, locks, IPC, allocation, or other non-realtime-safe behavior unless proven otherwise.
@@ -383,9 +385,9 @@ Then report:
 Do not make large changes without asking; small safety fixes are okay.
 ```
 
-```
 Prompt 12 — Documentation/manual entry draft
-Use once it’s working.``` text
+Use once it’s working.
+``` text
 Please draft a short user manual entry for the new MTS-ESP Master feature in the Tuning preparation.
 
 Explain:
