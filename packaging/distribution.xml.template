@@ -15,6 +15,7 @@
         <line choice="app" />
         <line choice="vst3" />
         <line choice="au" />
+        <line choice="mtsesp" />
         ${RESOURCES_CHOICE_LINE}
     </choices-outline>
 
@@ -28,6 +29,10 @@
 
     <choice id="au" visible="true" start_selected="true" title="${PRODUCT_NAME} AU">
         <pkg-ref id="${BUNDLE_ID}.au.pkg" version="${VERSION}" onConclusion="none">${PRODUCT_NAME}.au.pkg</pkg-ref>
+    </choice>
+
+    <choice id="mtsesp" visible="true" start_selected="true" title="MTS-ESP Tuning Library (for MTS-ESP Master)">
+        <pkg-ref id="${BUNDLE_ID}.mtsesp.pkg" version="${VERSION}" onConclusion="none">${PRODUCT_NAME}.mtsesp.pkg</pkg-ref>
     </choice>
 
     ${RESOURCES_CHOICE_DEFINITION}

@@ -382,11 +382,18 @@ void TuningParametersView::showScalaKbm(bool show)
 
 void TuningParametersView::showCurrentTuningType()
 {
-    // always show static tuning
-    showStaticTuning(true);
-    showAdaptiveTuning(params.tuningState.tuningType->get() == TuningType::Adaptive || params.tuningState.tuningType->get() == TuningType::Adaptive_Anchored);
-    showSpringTuning(params.tuningState.tuningType->get() == TuningType::Spring_Tuning);
-    showScalaKbm(params.tuningState.tuningType->get() == TuningType::Scala_KBM);
+    const auto type = params.tuningState.tuningType->get();
+
+    // In MTS-ESP receive mode the external master dictates the tuning, so hide
+    // the internal tuning editors entirely (the spiral still visualises the
+    // received frequencies). Otherwise show the static controls + the section
+    // for the active tuning type.
+    const bool isClient = (type == TuningType::MTS_Client);
+
+    showStaticTuning(! isClient);
+    showAdaptiveTuning(! isClient && (type == TuningType::Adaptive || type == TuningType::Adaptive_Anchored));
+    showSpringTuning(! isClient && type == TuningType::Spring_Tuning);
+    showScalaKbm(! isClient && type == TuningType::Scala_KBM);
 
     resized();
 

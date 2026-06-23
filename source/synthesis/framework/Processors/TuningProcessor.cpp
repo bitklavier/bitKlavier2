@@ -409,6 +409,20 @@ double TuningState::getTargetFrequency (int currentlyPlayingNote, double current
         lastFrequencyTarget = getScalaTargetFrequency(currentlyPlayingNote, currentTransposition, tuneTranspositions);
     }
 
+    /*
+     * or MTS-ESP client (receive mode): the connected MTS-ESP master dictates the
+     * tuning. Querying the client is lock-free and audio-thread safe; it falls
+     * back to 12-TET when no master is connected.
+     */
+    else if(getTuningType() == TuningType::MTS_Client)
+    {
+        lastFrequencyTarget = mtsClient.noteToFrequency(currentlyPlayingNote) * intervalToRatio(getOverallOffset());
+
+        // Transpositions are tuned literally (as for Spring/Adaptive).
+        if (currentTransposition != 0)
+            lastFrequencyTarget *= intervalToRatio(currentTransposition);
+    }
+
     /**
      * spiralNotes will hold the lastFrequencyTarget for all currently playing non-transposed notes
      *      - spiralNotes is initialized to all -1, indicating that all notes are inactive
@@ -452,6 +466,10 @@ void TuningState::fillTuningTable (double out[128])
 
             case TuningType::Scala_KBM:
                 freq = getScalaTargetFrequency (n, 0, false);
+                break;
+
+            case TuningType::MTS_Client:
+                freq = mtsClient.noteToFrequency (n) * intervalToRatio (getOverallOffset());
                 break;
 
             case TuningType::Static:
@@ -968,6 +986,25 @@ TuningProcessor::TuningProcessor (SynthBase& parent, const juce::ValueTree& vt, 
                     state.params.tuningState.fundamental->getIndex(),
                     state.params.tuningState.circularTuningOffset,
                     state.params.tuningState.circularTuningOffset_custom);
+            }
+        )
+    };
+
+    // MessageThread: when this Tuning enters MTS-ESP receive mode, register an
+    // MTS-ESP client (off the audio thread). Registration is lazy so non-client
+    // Tunings never register (keeping the master's client count honest), and we
+    // never deregister on a type switch — only in the destructor with audio
+    // paused — so the audio thread can't query a freed handle.
+    tuningCallbacks +=
+    {
+        state.getParameterListeners().addParameterListener
+        (
+            state.params.tuningState.tuningType,
+            chowdsp::ParameterListenerThread::MessageThread,
+            [this]()
+            {
+                if (state.params.tuningState.tuningType->get() == TuningType::MTS_Client)
+                    state.params.tuningState.mtsClient.registerClient();
             }
         )
     };

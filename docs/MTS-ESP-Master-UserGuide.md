@@ -9,8 +9,11 @@ your computer, in the case of the standalone). bitKlavier can act as the
 microtonal-capable instruments and effects automatically follow bitKlavier's
 tuning — in real time, including while notes are sustaining.
 
-This is **master/publishing only** for now: bitKlavier can *send* its tuning to
-other plugins, but it does not yet *receive* tuning from another MTS-ESP master.
+bitKlavier supports **both directions**:
+- **Master / publishing** — a Tuning broadcasts its tuning to other plugins
+  (described below).
+- **Client / receive** — a Tuning takes its tuning *from* another MTS-ESP master
+  (see "Receiving a tuning (MTS-ESP Client)" at the end).
 
 ## How to use it
 
@@ -69,9 +72,26 @@ acting as the MTS-ESP master, since it resets MTS-ESP for the whole system.
 - bitKlavier releases the MTS-ESP master role automatically when you close the
   plugin or quit the app.
 
+## Receiving a tuning (MTS-ESP Client)
+
+A Tuning preparation can also *follow* an external MTS-ESP master instead of
+generating its own tuning:
+
+1. Open the Tuning preparation and set its **Tuning Type** menu to **MTS Client**.
+2. The Tuning's internal controls hide — its pitches now come from whatever
+   MTS-ESP master is running (another plugin, or another bitKlavier). The spiral
+   display shows the received tuning.
+3. If no master is connected, the Tuning falls back to standard 12-TET until one
+   appears.
+
+Notes:
+- This is **per Tuning** — different Tunings can independently follow the master
+  or use their own tunings, and several can be clients at once.
+- Receive mode tracks the master in real time, including while notes sustain.
+- A Tuning can be a client *or* a master, not both meaningfully at once.
+
 ## Limitations
 
-- **Master/publishing only** — there is no receive (client) mode yet.
 - **One master per bitKlavier instance/gallery.**
 - **One master per system** — this is an MTS-ESP rule, not a bitKlavier one. If
   you run two bitKlavier instances (or another master plugin), only one can hold

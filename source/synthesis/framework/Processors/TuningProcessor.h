@@ -21,6 +21,7 @@
 #include "SpringTuningParams.h"
 #include "OffsetKnobParam.h"
 #include "SpringTuning/SpringTuning.h"
+#include "MTSESPClientWrapper.h"
 #include <chowdsp_plugin_state/chowdsp_plugin_state.h>
 #include <chowdsp_sources/chowdsp_sources.h>
 #include "Tunings.h"
@@ -169,6 +170,14 @@ struct TuningState : bitklavier::StateChangeableParameter
     OffsetKnobParam offsetKnobParam;
 
     std::unique_ptr<SpringTuning> springTuner;
+
+    /**
+     * MTS-ESP client (receive mode). Used when tuningType == MTS_Client to read
+     * per-note frequencies from a connected MTS-ESP master. Queried on the audio
+     * thread in getTargetFrequency(); registered/deregistered on the message
+     * thread by TuningProcessor.
+     */
+    MTSESPClientWrapper mtsClient;
 
     std::array<std::atomic<float>, 128> spiralNotes; // store all the currently sounding frequencies here, by note, for the spiral display
 
@@ -350,8 +359,16 @@ public:
         if (parent.getEngine() != nullptr)
         {
             parent.pauseProcessing(true);
+            // Release the MTS-ESP client (if any) while audio is paused, so the
+            // audio thread can't query a freed handle.
+            state.params.tuningState.mtsClient.deregisterClient();
             listeners.call ([] (TuningListener& l) { l.tuningStateInvalidated(); });
             parent.pauseProcessing(false);
+        }
+        else
+        {
+            // No engine/audio running — safe to release directly.
+            state.params.tuningState.mtsClient.deregisterClient();
         }
     }
 

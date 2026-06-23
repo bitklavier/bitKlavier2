@@ -262,7 +262,8 @@ option(BITKLAVIER_ENABLE_MTS_ESP "Build with MTS-ESP master/publishing support" 
 if(BITKLAVIER_ENABLE_MTS_ESP)
     message(STATUS "MTS-ESP master support: ENABLED")
     target_sources(SharedCode INTERFACE
-        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/MTS-ESP/libMTSMaster.cpp")
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/MTS-ESP/libMTSMaster.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/MTS-ESP/libMTSClient.cpp")
     target_include_directories(SharedCode INTERFACE
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/MTS-ESP")
     target_compile_definitions(SharedCode INTERFACE BITKLAVIER_ENABLE_MTS_ESP=1)
