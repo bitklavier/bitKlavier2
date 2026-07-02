@@ -10,6 +10,10 @@ set(CHUCK_C_SOURCES
     "${CHUCK_SRC}/util_raw.c"
     "${CHUCK_SRC}/util_xforms.c"
     "${CHUCK_SRC}/util_sndfile.c"
+    # Stub for Apple private MultitouchSupport framework — allows util_hid.cpp to
+    # link without the private framework; returns NULL so multitouch is gracefully
+    # disabled at runtime (bitKlavier embeds ChucK for audio only, not HID).
+    "${CMAKE_CURRENT_SOURCE_DIR}/chuck_multitouch_stub.c"
     # liblo (OSC) — pre-configured config.h already in lo/
     "${CHUCK_SRC}/lo/address.c"
     "${CHUCK_SRC}/lo/blob.c"

@@ -21,12 +21,14 @@ public:
                                const juce::ValueTree& prepVT,
                                OpenGlWrapper* open_gl,
                                SynthBase* synth = nullptr,
-                               juce::AudioProcessorGraph::NodeID nodeId = {})
+                               juce::AudioProcessorGraph::NodeID nodeId = {},
+                               ChucKlavierProcessor* proc = nullptr)
         : SynthSection (""),
           cparams_ (params),
           prepVT_ (prepVT),
           synth_ (synth),
-          nodeId_ (nodeId)
+          nodeId_ (nodeId),
+          proc_ (proc)
     {
         setName ("chucklavier");
         setLookAndFeel (DefaultLookAndFeel::instance());
@@ -90,12 +92,20 @@ public:
             prepVT_.setProperty (IDs::chuckScript, scriptEditor->getText(), nullptr);
         };
 
-        // Send to VM button (stub — will wire to VM in Stage 2)
+        // Status label — shows compile result or error under the editor
+        statusLabel = std::make_unique<juce::Label> ("chuckStatus");
+        statusLabel->setFont (juce::Font (11.0f));
+        statusLabel->setColour (juce::Label::textColourId, juce::Colours::lightgrey);
+        statusLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
+        statusLabel->setText ("VM ready", juce::dontSendNotification);
+        addAndMakeVisible (statusLabel.get());
+
+        // Send to VM button
         sendScriptButton = std::make_unique<SynthButton> ("sendScript");
         sendScriptButton->setText ("Send to VM");
-        sendScriptButton->setTooltip ("Compile and hot-swap the script into the ChucK VM (Stage 2)");
+        sendScriptButton->setTooltip ("Compile and hot-swap the script into the ChucK VM");
         addSynthButton (sendScriptButton.get(), true);
-        sendScriptButton->onClick = [] { /* Stage 2: compile + swap */ };
+        sendScriptButton->onClick = [this] { requestScriptSwap (scriptEditor->getText()); };
 
         muteButton_ = std::make_unique<SynthButton> ("mute");
         muteButton_->setText ("M");
@@ -124,6 +134,7 @@ public:
         startTimer (50);
     }
 
+    // Poll mute/solo state at 50ms; hot-swap timer is handled separately via hotSwapTimer_.
     void timerCallback() override
     {
         bool soloed    = cparams_.soloed_.load (std::memory_order_relaxed);
@@ -141,7 +152,11 @@ public:
         }
     }
 
-    void stopAllTimers() override { stopTimer(); }
+    void stopAllTimers() override
+    {
+        stopTimer();
+        hotSwapTimer_.stopTimer();
+    }
 
     void paintBackground (juce::Graphics& g) override
     {
@@ -162,6 +177,7 @@ public:
     std::unique_ptr<PeakMeterSection> externalLevelMeter;
 
     std::unique_ptr<OpenGlTextEditor> scriptEditor;
+    std::unique_ptr<juce::Label>      statusLabel;
     std::unique_ptr<SynthButton>      sendScriptButton;
     std::unique_ptr<SynthButton>      muteButton_;
     std::unique_ptr<SynthButton>      soloButton_;
@@ -169,11 +185,53 @@ public:
 private:
     static juce::String getDefaultScript()
     {
-        return "// ChucKlavier default: passthrough\nadc => dac;\nwhile (true) { 1::samp => now; }\n";
+        return "adc => dac;\nwhile( true ) { 1::samp => now; }\n";
     }
 
-    ChucKlavierParams& cparams_;
-    juce::ValueTree    prepVT_;
-    SynthBase*         synth_   = nullptr;
-    juce::AudioProcessorGraph::NodeID nodeId_;
+    void requestScriptSwap (const juce::String& newScript)
+    {
+        if (proc_ == nullptr) return;
+        pendingScript_ = newScript;
+        proc_->vmParked_.store (false, std::memory_order_relaxed);
+        proc_->vmSuspended_.store (true, std::memory_order_release);
+        statusLabel->setColour (juce::Label::textColourId, juce::Colours::yellow);
+        statusLabel->setText ("Compiling…", juce::dontSendNotification);
+        sendScriptButton->setEnabled (false);
+        hotSwapTimer_.startTimer (5);
+    }
+
+    void setStatusOk (const juce::String& msg)
+    {
+        statusLabel->setColour (juce::Label::textColourId, juce::Colours::lightgreen);
+        statusLabel->setText (msg, juce::dontSendNotification);
+        sendScriptButton->setEnabled (true);
+    }
+
+    void setStatusError (const juce::String& msg)
+    {
+        statusLabel->setColour (juce::Label::textColourId, juce::Colours::orange);
+        statusLabel->setText (msg, juce::dontSendNotification);
+        sendScriptButton->setEnabled (true);
+    }
+
+    // Separate juce::Timer for hot-swap so it can run at 5ms without conflicting
+    // with the 50ms mute/solo poll on the outer timer.
+    struct HotSwapTimer : public juce::Timer
+    {
+        explicit HotSwapTimer (ChucKlavierParametersView& owner) : owner_ (owner) {}
+
+        void timerCallback() override;  // implemented in .cpp (includes chuck.h)
+
+        int tickCount_ = 0;
+        ChucKlavierParametersView& owner_;
+    };
+
+    HotSwapTimer hotSwapTimer_ { *this };
+
+    ChucKlavierParams&                    cparams_;
+    juce::ValueTree                       prepVT_;
+    SynthBase*                            synth_   = nullptr;
+    juce::AudioProcessorGraph::NodeID     nodeId_;
+    ChucKlavierProcessor*                 proc_    = nullptr;
+    juce::String                          pendingScript_;
 };

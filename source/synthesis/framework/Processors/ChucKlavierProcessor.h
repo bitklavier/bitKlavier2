@@ -13,6 +13,12 @@
 #include <chowdsp_serialization/chowdsp_serialization.h>
 #include "utils.h"
 
+// Forward-declare ChucK to avoid including chuck.h in this header.
+// chuck.h defines VERSION as a class member but the project also defines VERSION
+// as a preprocessor macro ("5.1.0"), causing a collision in all TUs that include
+// chuck.h. Keeping chuck.h in .cpp files only prevents this from spreading.
+class ChucK;
+
 struct ChucKlavierParams : chowdsp::ParamHolder
 {
     float rangeStart = -80.0f;
@@ -85,6 +91,7 @@ class ChucKlavierProcessor
 {
 public:
     ChucKlavierProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
+    ~ChucKlavierProcessor();  // defined in .cpp after #include "chuck.h"
 
     std::atomic<bool>& getMuted()     override { return state.params.muted_; }
     std::atomic<bool>& getUserMuted() override { return state.params.userMuted_; }
@@ -92,7 +99,7 @@ public:
     std::atomic<bool>& getSoloMuted() override { return state.params.soloMuted_; }
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
-    void releaseResources() override {}
+    void releaseResources() override;
     void processAudioBlock (juce::AudioBuffer<float>& buffer) override {}
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return true; }
@@ -117,7 +124,24 @@ public:
 
     bool isBusesLayoutSupported (const juce::AudioProcessor::BusesLayout&) const override { return true; }
 
+    ChucK* getVM() { return vm_.get(); }
+
+    // Atomic handshake for hot-swap: MT sets vmSuspended_ true, AT acknowledges via vmParked_.
+    std::atomic<bool> vmSuspended_ { false };
+    std::atomic<bool> vmParked_    { false };
+
+    // Last error/status message from compile; written on MT, read on MT.
+    juce::String lastCompileMessage;
+
 private:
+    static constexpr const char* kDefaultScript =
+        "adc => dac;\nwhile( true ) { 1::samp => now; }\n";
+
+    std::unique_ptr<ChucK> vm_;
+    double vmSampleRate_ = 0.0;
+    std::vector<float> chuckInBuf_;
+    std::vector<float> chuckOutBuf_;
+
     const juce::AudioBuffer<float>* externalInputBuffer = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChucKlavierProcessor)
