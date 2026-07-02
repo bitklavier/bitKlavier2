@@ -34,33 +34,22 @@ void ChucKlavierParametersView::HotSwapTimer::timerCallback()
         return;
     }
 
-    // AT has parked — safe to compile on the message thread now.
+    // AT has parked — safe to rebuild the VM on the message thread now.
     stopTimer();
     tickCount_ = 0;
 
-    auto* vm = proc->getVM();
-    if (vm == nullptr)
-    {
-        proc->vmSuspended_.store (false, std::memory_order_release);
-        owner_.setStatusError ("VM not initialised");
-        return;
-    }
+    // doHotSwap builds a fresh ChucK VM and compiles into it, then replaces vm_.
+    // A fresh VM is required because UGen graph connections (e.g. adc => dac)
+    // persist after removeAllShreds() — rebuilding guarantees a clean graph.
+    bool ok = proc->doHotSwap (owner_.pendingScript_.toStdString());
+    proc->vmSuspended_.store (false, std::memory_order_release);
 
-    // Compile first — only remove old shreds on success so failures leave the
-    // previous script running.
-    bool ok = vm->compileCode (owner_.pendingScript_.toStdString(), "",
-                               /*count=*/ 1, /*immediate=*/ false);
     if (ok)
     {
-        vm->removeAllShreds();
-        vm->compileCode (owner_.pendingScript_.toStdString(), "",
-                         /*count=*/ 1, /*immediate=*/ true);
-        proc->vmSuspended_.store (false, std::memory_order_release);
         owner_.setStatusOk ("Compiled OK");
     }
     else
     {
-        proc->vmSuspended_.store (false, std::memory_order_release);
         juce::String errMsg = EM_lasterror();
         if (errMsg.isEmpty()) errMsg = "Compile error";
         owner_.setStatusError (errMsg);

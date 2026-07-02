@@ -58,6 +58,27 @@ void ChucKlavierProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     vm_->compileCode (script, "");
 }
 
+bool ChucKlavierProcessor::doHotSwap (const std::string& script)
+{
+    // Build the new VM first — don't touch vm_ until we know compilation succeeds.
+    // vmSuspended_=true guarantees the AT is silent and not reading vm_.
+    auto newVm = std::make_unique<ChucK>();
+    newVm->setParam (CHUCK_PARAM_SAMPLE_RATE,     (t_CKINT) getSampleRate());
+    newVm->setParam (CHUCK_PARAM_INPUT_CHANNELS,  (t_CKINT) 2);
+    newVm->setParam (CHUCK_PARAM_OUTPUT_CHANNELS, (t_CKINT) 2);
+    newVm->setParam (CHUCK_PARAM_VM_HALT,         (t_CKINT) 0);
+    newVm->setCherrCallback ([] (const char* msg) { (void) msg; });
+    newVm->init();
+    newVm->start();
+
+    if (!newVm->compileCode (script, "", 1, /*immediate=*/ true))
+        return false;  // vm_ is unchanged; old script keeps running
+
+    vm_ = std::move (newVm);
+    vmSampleRate_ = getSampleRate();
+    return true;
+}
+
 void ChucKlavierProcessor::releaseResources()
 {
     vm_.reset();

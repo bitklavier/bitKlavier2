@@ -126,6 +126,11 @@ public:
 
     ChucK* getVM() { return vm_.get(); }
 
+    // Hot-swap: build a fresh VM, compile script, replace vm_ on success.
+    // Returns true on success; vm_ is unchanged on failure.
+    // Must be called with vmSuspended_=true (AT is parked and not touching vm_).
+    bool doHotSwap (const std::string& script);
+
     // Atomic handshake for hot-swap: MT sets vmSuspended_ true, AT acknowledges via vmParked_.
     std::atomic<bool> vmSuspended_ { false };
     std::atomic<bool> vmParked_    { false };
