@@ -195,7 +195,7 @@ private:
         proc_->vmParked_.store (false, std::memory_order_relaxed);
         proc_->vmSuspended_.store (true, std::memory_order_release);
         statusLabel->setColour (juce::Label::textColourId, juce::Colours::yellow);
-        statusLabel->setText ("Compiling…", juce::dontSendNotification);
+        statusLabel->setText (juce::String::fromUTF8 ("Compiling\xe2\x80\xa6"), juce::dontSendNotification);
         sendScriptButton->setEnabled (false);
         hotSwapTimer_.startTimer (5);
     }
