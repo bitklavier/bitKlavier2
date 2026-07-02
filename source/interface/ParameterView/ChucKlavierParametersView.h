@@ -92,13 +92,15 @@ public:
             prepVT_.setProperty (IDs::chuckScript, scriptEditor->getText(), nullptr);
         };
 
-        // Status label — shows compile result or error under the editor
-        statusLabel = std::make_unique<juce::Label> ("chuckStatus");
-        statusLabel->setFont (juce::Font (11.0f));
-        statusLabel->setColour (juce::Label::textColourId, juce::Colours::lightgrey);
-        statusLabel->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
-        statusLabel->setText ("VM ready", juce::dontSendNotification);
-        addAndMakeVisible (statusLabel.get());
+        // Status label — shows compile result or error under the editor.
+        // Must be a PlainTextComponent (OpenGL-rendered) — plain juce::Label is
+        // invisible underneath the OpenGL canvas.
+        statusLabel = std::make_shared<PlainTextComponent> ("chuckStatus", "VM ready");
+        statusLabel->setFontType (PlainTextComponent::kRegular);
+        statusLabel->setTextSize (11.0f);
+        statusLabel->setJustification (juce::Justification::centredLeft);
+        statusLabel->setColor (juce::Colours::lightgrey);
+        addOpenGlComponent (statusLabel);
 
         // Send to VM button
         sendScriptButton = std::make_unique<SynthButton> ("sendScript");
@@ -176,9 +178,9 @@ public:
     std::unique_ptr<PeakMeterSection> inLevelMeter;
     std::unique_ptr<PeakMeterSection> externalLevelMeter;
 
-    std::unique_ptr<OpenGlTextEditor> scriptEditor;
-    std::unique_ptr<juce::Label>      statusLabel;
-    std::unique_ptr<SynthButton>      sendScriptButton;
+    std::unique_ptr<OpenGlTextEditor>    scriptEditor;
+    std::shared_ptr<PlainTextComponent> statusLabel;
+    std::unique_ptr<SynthButton>         sendScriptButton;
     std::unique_ptr<SynthButton>      muteButton_;
     std::unique_ptr<SynthButton>      soloButton_;
 
@@ -194,23 +196,23 @@ private:
         pendingScript_ = newScript;
         proc_->vmParked_.store (false, std::memory_order_relaxed);
         proc_->vmSuspended_.store (true, std::memory_order_release);
-        statusLabel->setColour (juce::Label::textColourId, juce::Colours::yellow);
-        statusLabel->setText (juce::String::fromUTF8 ("Compiling\xe2\x80\xa6"), juce::dontSendNotification);
+        statusLabel->setColor (juce::Colours::yellow);
+        statusLabel->setText (juce::String::fromUTF8 ("Compiling\xe2\x80\xa6"));
         sendScriptButton->setEnabled (false);
         hotSwapTimer_.startTimer (5);
     }
 
     void setStatusOk (const juce::String& msg)
     {
-        statusLabel->setColour (juce::Label::textColourId, juce::Colours::lightgreen);
-        statusLabel->setText (msg, juce::dontSendNotification);
+        statusLabel->setColor (juce::Colours::lightgreen);
+        statusLabel->setText (msg);
         sendScriptButton->setEnabled (true);
     }
 
     void setStatusError (const juce::String& msg)
     {
-        statusLabel->setColour (juce::Label::textColourId, juce::Colours::orange);
-        statusLabel->setText (msg, juce::dontSendNotification);
+        statusLabel->setColor (juce::Colours::orange);
+        statusLabel->setText (msg);
         sendScriptButton->setEnabled (true);
     }
 
