@@ -683,7 +683,8 @@ PopupItems SynthGuiInterface::getPreparationPopupItems()
         if (type <= bitklavier::BKPreparationType::PreparationTypeComment ||
             type == bitklavier::BKPreparationType::PreparationTypeCompressor ||
             type == bitklavier::BKPreparationType::PreparationTypeEQ ||
-            type == bitklavier::BKPreparationType::PreparationTypeReverb)
+            type == bitklavier::BKPreparationType::PreparationTypeReverb ||
+            type == bitklavier::BKPreparationType::PreparationTypeChucKlavier)
             popup.addItem(type, name);
         if (type == bitklavier::BKPreparationType::PreparationTypeResonance ||
             type == bitklavier::BKPreparationType::PreparationTypeTempo ||

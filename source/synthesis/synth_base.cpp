@@ -50,6 +50,7 @@
 #include "EQProcessor.h"
 #include "CompressorProcessor.h"
 #include "ReverbProcessor.h"
+#include "ChucKlavierProcessor.h"
 #include "MTSESPMasterCoordinator.h"
 
 // For saving last opened gallery path
@@ -118,6 +119,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     prepFactory.template registerType<CompressorProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::compressor.toString().toStdString());
     prepFactory.template registerType<EQProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::eq.toString().toStdString());
     prepFactory.template registerType<ReverbProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::reverb.toString().toStdString());
+    prepFactory.template registerType<ChucKlavierProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::chucklavier.toString().toStdString());
 
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);

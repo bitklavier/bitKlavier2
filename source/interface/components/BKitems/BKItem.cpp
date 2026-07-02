@@ -57,6 +57,14 @@ namespace
         if (type == bitklavier::BKPreparationType::PreparationTypeReverb)
             return Paths::reverbPaths();
 
+        if (type == bitklavier::BKPreparationType::PreparationTypeChucKlavier)
+        {
+            // Stage 1: simple rectangular outline; replaced by SVG path in Stage 5
+            juce::Path outline;
+            outline.addRoundedRectangle (0.0f, 0.0f, 100.0f, 100.0f, 6.0f);
+            return juce::Array<juce::Path> { outline, juce::Path{}, juce::Path{} };
+        }
+
 //        if (type == bitklavier::BKPreparationType::PreparationTypeMidiFilter)
 //            return Paths::midiFilterPaths();
 
