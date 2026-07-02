@@ -3,12 +3,8 @@
 
 #include "ChucKlavierParametersView.h"
 
-// VERSION is defined as a preprocessor macro by the JUCE build system ("5.1.0").
-// chuck.h has a member `static std::string VERSION` which the macro corrupts.
-// Undef before including.
-#undef VERSION
-#include "chuck.h"
-#include "chuck_errmsg.h"
+// No ChucK headers needed here — EM_lasterror() is read inside doHotSwap()
+// (ChucKlavierProcessor.cpp) while the temporary VM is still alive.
 
 void ChucKlavierParametersView::HotSwapTimer::timerCallback()
 {
@@ -45,15 +41,9 @@ void ChucKlavierParametersView::HotSwapTimer::timerCallback()
     proc->vmSuspended_.store (false, std::memory_order_release);
 
     if (ok)
-    {
-        owner_.setStatusOk ("Compiled OK");
-    }
+        owner_.setStatusOk (proc->lastCompileMessage);
     else
-    {
-        juce::String errMsg = EM_lasterror();
-        if (errMsg.isEmpty()) errMsg = "Compile error";
-        owner_.setStatusError (errMsg);
-    }
+        owner_.setStatusError (proc->lastCompileMessage);
 }
 
 void ChucKlavierParametersView::resized()

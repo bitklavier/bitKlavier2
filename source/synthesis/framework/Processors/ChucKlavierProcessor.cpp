@@ -72,10 +72,18 @@ bool ChucKlavierProcessor::doHotSwap (const std::string& script)
     newVm->start();
 
     if (!newVm->compileCode (script, "", 1, /*immediate=*/ true))
+    {
+        // Capture the error NOW, while newVm is still alive — ChucK's dtor may
+        // clear the global EM_lasterror state when newVm goes out of scope.
+        lastCompileMessage = juce::String::fromUTF8 (EM_lasterror());
+        if (lastCompileMessage.isEmpty())
+            lastCompileMessage = "Compile error";
         return false;  // vm_ is unchanged; old script keeps running
+    }
 
     vm_ = std::move (newVm);
     vmSampleRate_ = getSampleRate();
+    lastCompileMessage = "Compiled OK";
     return true;
 }
 
