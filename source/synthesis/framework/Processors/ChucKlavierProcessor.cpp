@@ -10,6 +10,10 @@
 #undef VERSION
 #include "chuck.h"
 #include "chuck_errmsg.h"
+#include "chuck_globals.h"
+
+// Thread-local pointer set before vm_->run() so the static callback can dispatch to the right instance.
+thread_local ChucKlavierProcessor* ChucKlavierProcessor::g_currentProcessor = nullptr;
 
 ChucKlavierProcessor::ChucKlavierProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um)
     : PluginBase (parent, vt, um, chucKlavierBusLayout())
@@ -44,6 +48,7 @@ void ChucKlavierProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
 
         vm_->init();
         vm_->start();
+        vm_->globals()->listenForGlobalEvent ("bkMidiOutEvent", &ChucKlavierProcessor::onMidiOutFromVM, TRUE);
         vmSampleRate_ = sampleRate;
     }
 
@@ -70,6 +75,7 @@ bool ChucKlavierProcessor::doHotSwap (const std::string& script)
     newVm->setCherrCallback ([] (const char* msg) { (void) msg; });
     newVm->init();
     newVm->start();
+    newVm->globals()->listenForGlobalEvent ("bkMidiOutEvent", &ChucKlavierProcessor::onMidiOutFromVM, TRUE);
 
     if (!newVm->compileCode (script, "", 1, /*immediate=*/ true))
     {
@@ -93,10 +99,39 @@ void ChucKlavierProcessor::releaseResources()
     vmSampleRate_ = 0.0;
 }
 
-void ChucKlavierProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& /*midiMessages*/)
+void ChucKlavierProcessor::onMidiOutFromVM()
+{
+    if (auto* p = g_currentProcessor)
+        p->handleMidiOutEvent();
+}
+
+void ChucKlavierProcessor::handleMidiOutEvent()
+{
+    if (currentMidiOutputBuffer_ == nullptr || vm_ == nullptr)
+        return;
+
+    auto* g = vm_->globals();
+    const auto status = (juce::uint8) g->get_global_int_array_value ("bkMidiOut", 0);
+    if (status == 0)
+        return;  // script hasn't written an event
+
+    const auto d1  = (juce::uint8) g->get_global_int_array_value ("bkMidiOut", 1);
+    const auto d2  = (juce::uint8) g->get_global_int_array_value ("bkMidiOut", 2);
+    const int  pos = (int)         g->get_global_int_array_value ("bkMidiOut", 3);
+    const int clampedPos = juce::jlimit (0, juce::jmax (0, currentBlockSize_ - 1), pos);
+    const juce::uint8 bytes[3] = { status, d1, d2 };
+    currentMidiOutputBuffer_->addEvent (juce::MidiMessage (bytes, 3), clampedPos);
+}
+
+void ChucKlavierProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     state.getParameterListeners().callAudioThreadBroadcasters();
     processContinuousModulations (buffer);
+
+    // Snapshot inbound MIDI; clear the buffer (script decides what passes through).
+    juce::MidiBuffer inboundMidi;
+    inboundMidi.swapWith (midiMessages);
+    // midiMessages is now empty; script will addEvent() into it via handleMidiOutEvent().
 
     const int numSamples = buffer.getNumSamples();
     const bool muted = state.params.muted_.load (std::memory_order_relaxed);
@@ -130,6 +165,21 @@ void ChucKlavierProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     // ChucK VM tick — skip when suspended for hot-swap, or if not yet initialised.
     if (vm_ != nullptr && !vmSuspended_.load (std::memory_order_acquire))
     {
+        // Feed each inbound MIDI message to the VM as a global-int-array + event signal.
+        {
+            auto* g = vm_->globals();
+            for (auto mi : inboundMidi)
+            {
+                const auto msg = mi.getMessage();
+                if (msg.getRawDataSize() < 3) continue;
+                const auto* raw = msg.getRawData();
+                t_CKINT arr[4] = { (t_CKINT) raw[0], (t_CKINT) raw[1],
+                                   (t_CKINT) raw[2], (t_CKINT) mi.samplePosition };
+                g->set_global_int_array ("bkMidiIn", arr, 4);
+                g->signalGlobalEvent ("bkMidiInEvent");
+            }
+        }
+
         // Interleave JUCE stereo → ChucK interleaved format
         const float* L = buffer.getReadPointer (0);
         const float* R = buffer.getReadPointer (1);
@@ -139,7 +189,16 @@ void ChucKlavierProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
             chuckInBuf_[size_t(i * 2 + 1)] = R[i];
         }
 
+        // Arm context pointers so the static MIDI-out callback can dispatch to us.
+        g_currentProcessor      = this;
+        currentMidiOutputBuffer_ = &midiMessages;
+        currentBlockSize_        = numSamples;
+
         vm_->run (chuckInBuf_.data(), chuckOutBuf_.data(), (t_CKINT) numSamples);
+
+        currentMidiOutputBuffer_ = nullptr;
+        currentBlockSize_        = 0;
+        g_currentProcessor       = nullptr;
 
         // Deinterleave ChucK output → JUCE stereo
         float* outL = buffer.getWritePointer (0);
@@ -153,6 +212,7 @@ void ChucKlavierProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     else if (vmSuspended_.load (std::memory_order_acquire))
     {
         // Silence output while hot-swap is in progress; acknowledge the park.
+        // inboundMidi is discarded — one-block MIDI dropout matches the audio dropout.
         buffer.clear (0, 0, numSamples);
         buffer.clear (1, 0, numSamples);
         vmParked_.store (true, std::memory_order_release);

@@ -187,7 +187,7 @@ public:
 private:
     static juce::String getDefaultScript()
     {
-        return "adc => dac;\nwhile( true ) { 1::samp => now; }\n";
+        return juce::String (ChucKlavierProcessor::kDefaultScript);
     }
 
     void requestScriptSwap (const juce::String& newScript)

@@ -138,14 +138,48 @@ public:
     // Last error/status message from compile; written on MT, read on MT.
     juce::String lastCompileMessage;
 
-private:
+    // MIDI-out callback: set before vm_->run(), cleared after. Thread-local so
+    // multiple concurrent ChucKlavier instances on the same audio thread are safe.
+    static thread_local ChucKlavierProcessor* g_currentProcessor;
+
+    // Static trampoline registered with ChucK via listenForGlobalEvent.
+    // Fires synchronously inside ChucK::run() on the audio thread.
+    static void onMidiOutFromVM();
+    void handleMidiOutEvent();
+
+public:
     static constexpr const char* kDefaultScript =
-        "adc => dac;\nwhile( true ) { 1::samp => now; }\n";
+        "// bitKlavier ChucKlavier default: audio + MIDI passthrough\n"
+        "global int bkMidiIn[4];\n"
+        "global int bkMidiOut[4];\n"
+        "global Event bkMidiInEvent;\n"
+        "global Event bkMidiOutEvent;\n"
+        "\n"
+        "adc => dac;\n"
+        "\n"
+        "fun void midiPassthrough() {\n"
+        "    while( true ) {\n"
+        "        bkMidiInEvent => now;\n"
+        "        bkMidiIn[0] => bkMidiOut[0];\n"
+        "        bkMidiIn[1] => bkMidiOut[1];\n"
+        "        bkMidiIn[2] => bkMidiOut[2];\n"
+        "        bkMidiIn[3] => bkMidiOut[3];\n"
+        "        bkMidiOutEvent.broadcast();\n"
+        "    }\n"
+        "}\n"
+        "spork ~ midiPassthrough();\n"
+        "\n"
+        "while( true ) { 1::samp => now; }\n";
 
     std::unique_ptr<ChucK> vm_;
     double vmSampleRate_ = 0.0;
     std::vector<float> chuckInBuf_;
     std::vector<float> chuckOutBuf_;
+
+    // Set on the audio thread before vm_->run(), cleared after; read by onMidiOutFromVM callback.
+    juce::MidiBuffer* currentMidiOutputBuffer_ = nullptr;
+    int currentBlockSize_ = 0;
+
 
     const juce::AudioBuffer<float>* externalInputBuffer = nullptr;
 
