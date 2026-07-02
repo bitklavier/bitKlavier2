@@ -26,3 +26,7 @@
 	path = modules/clap-juce-extensions
 	url = https://github.com/free-audio/clap-juce-extensions.git
 	branch = main
+[submodule "third_party/chuck"]
+	path = third_party/chuck
+	url = https://github.com/ccrma/chuck.git
+	branch = chuck-1.5.5.8

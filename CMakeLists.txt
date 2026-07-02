@@ -97,6 +97,7 @@ message("-- Adding external libraries" )
 add_subdirectory(third_party/chowdsp_utils)
 add_subdirectory(third_party/sfzq/SFZPlayer)
 add_subdirectory(third_party/freeverb3)
+add_subdirectory(third_party/chuck-cmake)
 
 # Add CLAP format
 
@@ -316,6 +317,7 @@ target_link_libraries(SharedCode
     melatonin_audio_sparklines
     sfzero
     freeverb3
+    chuck
 )
 
 
