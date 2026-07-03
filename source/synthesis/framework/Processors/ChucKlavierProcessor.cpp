@@ -3,6 +3,7 @@
 
 #include "ChucKlavierProcessor.h"
 #include "synth_base.h"
+#include "TempoProcessor.h"
 
 // VERSION is defined as a preprocessor macro by the JUCE build system ("5.1.0").
 // chuck.h has a member `static std::string VERSION` which the macro corrupts.
@@ -22,6 +23,25 @@ ChucKlavierProcessor::ChucKlavierProcessor (SynthBase& parent, const juce::Value
 
 // Destructor defined here so std::unique_ptr<ChucK> sees the complete ChucK type.
 ChucKlavierProcessor::~ChucKlavierProcessor() = default;
+
+void ChucKlavierProcessor::setTuning (TuningProcessor* tun)
+{
+    if (tuning == tun)
+        return;
+
+    if (tuning != nullptr)
+        tuning->removeListener (this);
+
+    tuning = tun;
+
+    if (tuning != nullptr)
+        tuning->addListener (this);
+}
+
+void ChucKlavierProcessor::tuningStateInvalidated()
+{
+    tuning = nullptr;
+}
 
 void ChucKlavierProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
@@ -178,6 +198,23 @@ void ChucKlavierProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
                 g->set_global_int_array ("bkMidiIn", arr, 4);
                 g->signalGlobalEvent ("bkMidiInEvent");
             }
+        }
+
+        // Push tuning table (128 Hz values) and tempo BPM into ChucK globals each block.
+        if (tuning != nullptr)
+        {
+            t_CKFLOAT tmp[128];
+            double dtmp[128];
+            tuning->fillTuningTable (dtmp);
+            for (int i = 0; i < 128; ++i)
+                tmp[i] = (t_CKFLOAT) dtmp[i];
+            vm_->globals()->set_global_float_array ("bkTuningTable", tmp, 128);
+        }
+
+        if (tempo != nullptr)
+        {
+            if (auto* ptr = vm_->globals()->get_ptr_to_global_float ("bkTempoBPM"))
+                *ptr = (t_CKFLOAT) tempo->getState().params.tempoParam->getCurrentValue();
         }
 
         // Interleave JUCE stereo → ChucK interleaved format

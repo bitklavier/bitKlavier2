@@ -5,6 +5,7 @@
 
 #include "IMuteSolable.h"
 #include "PluginBase.h"
+#include "TuningProcessor.h"
 #include "Identifiers.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>
@@ -87,7 +88,8 @@ struct ChucKlavierNonParameterState : chowdsp::NonParamState
 class ChucKlavierProcessor
     : public bitklavier::PluginBase<bitklavier::PreparationStateImpl<ChucKlavierParams, ChucKlavierNonParameterState>>,
       public bitklavier::ExternalAudioInputReceiver,
-      public IMuteSolable
+      public IMuteSolable,
+      public TuningListener
 {
 public:
     ChucKlavierProcessor (SynthBase& parent, const juce::ValueTree& v, juce::UndoManager*);
@@ -147,6 +149,9 @@ public:
     static void onMidiOutFromVM();
     void handleMidiOutEvent();
 
+    void setTuning (TuningProcessor* tun) override;
+    void tuningStateInvalidated() override;
+
 public:
     static constexpr const char* kDefaultScript =
         "// bitKlavier ChucKlavier default: audio + MIDI passthrough\n"
@@ -154,6 +159,8 @@ public:
         "global int bkMidiOut[4];\n"
         "global Event bkMidiInEvent;\n"
         "global Event bkMidiOutEvent;\n"
+        "global float bkTuningTable[128];\n"
+        "global float bkTempoBPM;\n"
         "\n"
         "adc => dac;\n"
         "\n"
