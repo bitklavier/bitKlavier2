@@ -195,14 +195,21 @@ public:
     }
 
 private:
-    // CodeDocument::Listener — write script content back to the ValueTree on every edit.
+    // CodeDocument::Listener — write script content back to the ValueTree on every edit,
+    // and dismiss the error highlight colour so it doesn't linger while the user types.
     void codeDocumentTextInserted (const juce::String&, int) override
     {
         prepVT_.setProperty (IDs::chuckScript, scriptDoc_.getAllContent(), nullptr);
+        if (scriptEditor)
+            scriptEditor->setColour (juce::CodeEditorComponent::highlightColourId,
+                                     juce::Colours::darkgreen.withAlpha (0.5f));
     }
     void codeDocumentTextDeleted (int, int) override
     {
         prepVT_.setProperty (IDs::chuckScript, scriptDoc_.getAllContent(), nullptr);
+        if (scriptEditor)
+            scriptEditor->setColour (juce::CodeEditorComponent::highlightColourId,
+                                     juce::Colours::darkgreen.withAlpha (0.5f));
     }
 
     static juce::String getDefaultScript()
@@ -227,6 +234,9 @@ private:
         statusLabel->setColor (juce::Colours::lightgreen);
         statusLabel->setText (msg);
         sendScriptButton->setEnabled (true);
+        if (scriptEditor)
+            scriptEditor->setColour (juce::CodeEditorComponent::highlightColourId,
+                                     juce::Colours::darkgreen.withAlpha (0.5f));
     }
 
     void setStatusError (const juce::String& msg)
@@ -234,6 +244,59 @@ private:
         statusLabel->setColor (juce::Colours::orange);
         statusLabel->setText (msg);
         sendScriptButton->setEnabled (true);
+        if (scriptEditor)
+        {
+            scriptEditor->setColour (juce::CodeEditorComponent::highlightColourId,
+                                     juce::Colours::red.withAlpha (0.4f));
+            highlightErrorLine (parseErrorLine (msg));
+        }
+    }
+
+    // Highlight the given 1-based line in the editor and scroll it into view.
+    void highlightErrorLine (int line1Based)
+    {
+        if (scriptEditor == nullptr) return;
+        if (line1Based < 1 || line1Based > scriptDoc_.getNumLines()) return;
+        juce::CodeDocument::Position lineStart (scriptDoc_, line1Based - 1, 0);
+        int col = scriptDoc_.getLine (line1Based - 1).trimEnd().length();
+        if (col == 0) col = 1;
+        juce::CodeDocument::Position lineEnd (scriptDoc_, line1Based - 1, col);
+        scriptEditor->setHighlightedRegion (juce::Range<int> (lineStart.getPosition(), lineEnd.getPosition()));
+        scriptEditor->scrollToLine (line1Based - 1);
+        // setHighlightedRegion queues an async line-token rebuild via rebuildLineTokensAsync().
+        // callAsync posts to the end of the message queue — after the rebuild — so redoImage()
+        // paints the GL texture only once the selection is baked into the line data.
+        auto* ed = scriptEditor.get();
+        juce::MessageManager::callAsync ([ed] { ed->redoImage(); });
+    }
+
+    // Parse the line number from a ChucK error string (1-based), or -1 if not found.
+    // ChucK uses "<compiled.code>" as filename when compiling inline code, producing:
+    //   "<compiled.code>:LINE:COL: message"
+    static int parseErrorLine (const juce::String& msg)
+    {
+        // Primary: "<compiled.code>:LINE:COL: ..."
+        auto idx = msg.indexOf ("<compiled.code>:");
+        if (idx >= 0)
+        {
+            int line = msg.substring (idx + 16).getIntValue();
+            if (line > 0) return line;
+        }
+        // Fallback: "[chuck:LINE:COL]: ..." (alternate ChucK code path)
+        idx = msg.indexOf ("[chuck:");
+        if (idx >= 0)
+        {
+            int line = msg.substring (idx + 7).getIntValue();
+            if (line > 0) return line;
+        }
+        // Last resort: first ":N:" pattern (handles any filename)
+        auto colon = msg.indexOfChar (':');
+        if (colon >= 0)
+        {
+            int line = msg.substring (colon + 1).getIntValue();
+            if (line > 0) return line;
+        }
+        return -1;
     }
 
     // Separate juce::Timer for hot-swap so it can run at 5ms without conflicting
