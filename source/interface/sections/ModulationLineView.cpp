@@ -219,9 +219,10 @@ void ModulationLineView::tempoDropped (const juce::ValueTree& source, const juce
             return;
         }
     }
-    // only connect to blendronic or synchronic
+    // only connect to blendronic, synchronic, or chucklavier
     if (static_cast<int>(dest.getProperty(IDs::type)) == bitklavier::PreparationTypeBlendronic ||
-        static_cast<int>(dest.getProperty(IDs::type)) == bitklavier::PreparationTypeSynchronic)
+        static_cast<int>(dest.getProperty(IDs::type)) == bitklavier::PreparationTypeSynchronic  ||
+        static_cast<int>(dest.getProperty(IDs::type)) == bitklavier::PreparationTypeChucKlavier)
     {
         //modconnections will not hold a source index they simpl represent a connection btwn a mod and a prep
         juce::ValueTree _connection (IDs::TEMPOCONNECTION);
