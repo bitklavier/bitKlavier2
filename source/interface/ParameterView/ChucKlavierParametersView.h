@@ -108,6 +108,7 @@ public:
         sendScriptButton = std::make_unique<SynthButton> ("sendScript");
         sendScriptButton->setText ("Send to VM");
         sendScriptButton->setTooltip ("Compile and hot-swap the script into the ChucK VM");
+        sendScriptButton->setClickingTogglesState (false);
         addSynthButton (sendScriptButton.get(), true);
         sendScriptButton->onClick = [this] { requestScriptSwap (scriptDoc_.getAllContent()); };
 
