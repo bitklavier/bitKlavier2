@@ -5,6 +5,7 @@
 
 #include "ChucKlavierProcessor.h"
 #include "ChucKCodeTokeniser.h"
+#include "ChucKKnobPanel.h"
 #include "FullInterface.h"
 #include "Identifiers.h"
 #include "open_gl_code_editor.h"
@@ -32,7 +33,8 @@ public:
           prepVT_ (prepVT),
           synth_ (synth),
           nodeId_ (nodeId),
-          proc_ (proc)
+          proc_ (proc),
+          opengl_ (open_gl)
     {
         setName ("chucklavier");
         setLookAndFeel (DefaultLookAndFeel::instance());
@@ -238,6 +240,27 @@ private:
         if (scriptEditor)
             scriptEditor->setColour (juce::CodeEditorComponent::highlightColourId,
                                      juce::Colours::darkgreen.withAlpha (0.5f));
+        rebuildKnobPanel();
+    }
+
+    // Rebuild (or create) the knob panel from the current processor slot state.
+    void rebuildKnobPanel()
+    {
+        if (proc_ == nullptr || opengl_ == nullptr) return;
+
+        if (knobPanel_ != nullptr)
+        {
+            knobPanel_->refresh();
+        }
+        else
+        {
+            const juce::String uuid = getComponentID();
+            knobPanel_ = std::make_unique<ChucKKnobPanel> (*proc_, uuid, *opengl_);
+            addSubSection (knobPanel_.get());
+        }
+
+        resized();
+        repaint();
     }
 
     void setStatusError (const juce::String& msg)
@@ -319,5 +342,7 @@ private:
     SynthBase*                            synth_   = nullptr;
     juce::AudioProcessorGraph::NodeID     nodeId_;
     ChucKlavierProcessor*                 proc_    = nullptr;
+    OpenGlWrapper*                        opengl_  = nullptr;
     juce::String                          pendingScript_;
+    std::unique_ptr<ChucKKnobPanel>       knobPanel_;
 };

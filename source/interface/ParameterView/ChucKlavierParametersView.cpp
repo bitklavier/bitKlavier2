@@ -38,6 +38,16 @@ void ChucKlavierParametersView::HotSwapTimer::timerCallback()
     // A fresh VM is required because UGen graph connections (e.g. adc => dac)
     // persist after removeAllShreds() — rebuilding guarantees a clean graph.
     bool ok = proc->doHotSwap (owner_.pendingScript_.toStdString());
+
+    if (ok)
+    {
+        // Parse //@knob annotations and reconcile the stable slot->name table,
+        // then cache t_CKFLOAT* pointers from the fresh VM.
+        // Must run before vmSuspended_ is cleared so AT stays silent while we
+        // read global pointers from the just-built VM.
+        proc->reconcileSlots (owner_.pendingScript_);
+    }
+
     proc->vmSuspended_.store (false, std::memory_order_release);
 
     if (ok)
@@ -48,11 +58,21 @@ void ChucKlavierParametersView::HotSwapTimer::timerCallback()
 
 void ChucKlavierParametersView::resized()
 {
+    // Lazy-create the knob panel on the first resize with valid bounds.
+    // This ensures the panel is created only after the component is in the display
+    // hierarchy (constructor-time creation fails because bounds are zero).
+    if (knobPanel_ == nullptr && proc_ != nullptr && opengl_ != nullptr
+        && getWidth() > 0 && getHeight() > 0)
+    {
+        knobPanel_ = std::make_unique<ChucKKnobPanel> (*proc_, getComponentID(), *opengl_);
+        addSubSection (knobPanel_.get());
+    }
+
     const int titleWidth    = getTitleWidth();
     const int smallPadding  = findValue (Skin::kPadding);
     const int largePadding  = findValue (Skin::kLargePadding);
     const int buttonHeight  = 22;
-    const int statusHeight  = 18;
+    const int statusHeight  = 36;
 
     juce::Rectangle<int> titleArea = getLocalBounds().removeFromLeft (titleWidth);
     prepTitle->setBounds (titleArea);
@@ -91,22 +111,22 @@ void ChucKlavierParametersView::resized()
         }
     }
 
-    // Remaining area: script editor + status label + Send button
+    // Remaining area: 3/4 editor, 1/4 knob panel.
     bounds.reduce (largePadding, largePadding);
 
-    // Send to VM button at the bottom
-    auto buttonArea = bounds.removeFromBottom (buttonHeight);
-    sendScriptButton->setBounds (buttonArea);
-    bounds.removeFromBottom (smallPadding);
+    if (knobPanel_ != nullptr)
+        knobPanel_->setBounds (bounds.removeFromRight (bounds.getWidth() / 4));
 
-    // Status label above Send button
-    auto statusArea = bounds.removeFromBottom (statusHeight);
-    statusLabel->setBounds (statusArea);
-    bounds.removeFromBottom (smallPadding);
+    // Button: bottom flush with meter bottom; status above it, taller than before.
+    const int meterBottom = levelMeter->getBottom();
+    sendScriptButton->setBounds (bounds.getX(), meterBottom - buttonHeight, bounds.getWidth(), buttonHeight);
 
-    // Script editor fills the rest
-    if (bounds.getHeight() > 0)
-        scriptEditor->setBounds (bounds);
+    const int statusTop = meterBottom - buttonHeight - smallPadding - statusHeight;
+    statusLabel->setBounds (bounds.getX(), statusTop, bounds.getWidth(), statusHeight);
+
+    const int editorBottom = statusTop - smallPadding;
+    if (bounds.getHeight() > 0 && editorBottom > bounds.getY())
+        scriptEditor->setBounds (bounds.withBottom (editorBottom));
 
     SynthSection::resized();
 }

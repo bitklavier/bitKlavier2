@@ -16,9 +16,124 @@
 // Thread-local pointer set before vm_->run() so the static callback can dispatch to the right instance.
 thread_local ChucKlavierProcessor* ChucKlavierProcessor::g_currentProcessor = nullptr;
 
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+// Parse //@knob annotations from a ChucK script.
+// Expected format (on the line immediately before a `global float NAME;` declaration):
+//   //@knob [label="My Label"] [min=0] [max=1] [default=0.5]
+// Any key=value pair can be present or absent; defaults are applied when missing.
+struct ParsedKnob
+{
+    juce::String name;
+    juce::String label;
+    float minVal    = 0.0f;
+    float maxVal    = 1.0f;
+    float defaultVal = 0.5f;
+};
+
+// Find the value string for `key` in `src`, tolerating spaces around `=`.
+// Returns empty string if key not found.
+// Enforces a word boundary before the key so "max" doesn't match "maxValue".
+static juce::String getKVValue (const juce::String& src, const juce::String& key)
+{
+    int idx = 0;
+    while ((idx = src.indexOf (idx, key)) >= 0)
+    {
+        // Word-boundary: char before key must not be alphanumeric or '_'
+        if (idx > 0)
+        {
+            juce::juce_wchar prev = src[idx - 1];
+            if (juce::CharacterFunctions::isLetterOrDigit (prev) || prev == '_')
+            {
+                idx += key.length();
+                continue;
+            }
+        }
+        // After the key: skip whitespace, expect '='
+        juce::String after = src.substring (idx + key.length()).trimStart();
+        if (! after.startsWithChar ('='))
+        {
+            idx += key.length();
+            continue;
+        }
+        return after.substring (1).trimStart();  // value follows '='
+    }
+    return {};
+}
+
+static float parseKV (const juce::String& src, const juce::String& key, float fallback)
+{
+    juce::String rest = getKVValue (src, key);
+    if (rest.isEmpty()) return fallback;
+    if (rest.startsWithChar ('"'))
+        rest = rest.substring (1, rest.indexOf (1, "\""));
+    return rest.getFloatValue();
+}
+
+static juce::String parseKVString (const juce::String& src, const juce::String& key,
+                                   const juce::String& fallback)
+{
+    juce::String rest = getKVValue (src, key);
+    if (rest.isEmpty()) return fallback;
+    if (rest.startsWithChar ('"'))
+    {
+        int end = rest.indexOf (1, "\"");
+        return end > 0 ? rest.substring (1, end) : fallback;
+    }
+    // Unquoted: read until next whitespace
+    return rest.upToFirstOccurrenceOf (" ", false, false)
+               .upToFirstOccurrenceOf ("\t", false, false);
+}
+
+static std::vector<ParsedKnob> parseScriptKnobs (const juce::String& script)
+{
+    std::vector<ParsedKnob> result;
+    juce::StringArray lines;
+    lines.addLines (script);
+
+    for (int i = 0; i < lines.size() - 1; ++i)
+    {
+        juce::String line = lines[i].trim();
+        if (! line.startsWith ("//@knob")) continue;
+
+        // Next non-blank line must be `global float NAME;`
+        juce::String nextLine = lines[i + 1].trim();
+        if (! nextLine.startsWith ("global") || ! nextLine.contains ("float")) continue;
+
+        // Extract variable name: "global float NAME;" -> NAME
+        juce::String afterFloat = nextLine.fromFirstOccurrenceOf ("float", false, false).trim();
+        juce::String varName = afterFloat.upToFirstOccurrenceOf (";", false, false).trim()
+                                         .upToFirstOccurrenceOf (" ", false, false).trim()
+                                         .upToFirstOccurrenceOf ("[", false, false).trim();
+        if (varName.isEmpty()) continue;
+
+        ParsedKnob pk;
+        pk.name       = varName;
+        pk.minVal     = parseKV       (line, "min",     0.0f);
+        pk.maxVal     = parseKV       (line, "max",     1.0f);
+        pk.defaultVal = parseKV       (line, "default", 0.5f);
+        pk.label      = parseKVString (line, "label",   varName);
+        result.push_back (pk);
+    }
+    return result;
+}
+
+static int findFreeSlot (const std::array<ChucKlavierProcessor::SlotBinding,
+                                          ChucKlavierParams::kMaxChuckModParams>& slots)
+{
+    for (int i = 0; i < ChucKlavierParams::kMaxChuckModParams; ++i)
+        if (slots[i].name.isEmpty())
+            return i;
+    return -1;  // all 32 slots used
+}
+
 ChucKlavierProcessor::ChucKlavierProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um)
     : PluginBase (parent, vt, um, chucKlavierBusLayout())
 {
+    // Restore slot bindings from an existing <chuckKnobs> child (gallery load path).
+    loadSlotBindingsFromVT();
 }
 
 // Destructor defined here so std::unique_ptr<ChucK> sees the complete ChucK type.
@@ -81,6 +196,10 @@ void ChucKlavierProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
                                ? savedScript.toStdString()
                                : std::string (kDefaultScript);
     vm_->compileCode (script, "");
+
+    // After compilation, cache t_CKFLOAT* pointers for any loaded slot bindings.
+    // (For a fresh gallery, slots_ is populated from loadSlotBindingsFromVT() in the ctor.)
+    cacheGlobalPtrs();
 }
 
 bool ChucKlavierProcessor::doHotSwap (const std::string& script)
@@ -139,6 +258,172 @@ void ChucKlavierProcessor::allNotesOff()
     doHotSwap (script);
 
     vmSuspended_.store (false, std::memory_order_release);
+}
+
+// ---------------------------------------------------------------------------
+// Slot binding helpers
+// ---------------------------------------------------------------------------
+
+// Restore slot table from the <chuckKnobs> VT child (called from ctor).
+void ChucKlavierProcessor::loadSlotBindingsFromVT()
+{
+    auto knobsVt = v.getChildWithName (IDs::chuckKnobs);
+    if (! knobsVt.isValid()) return;
+    for (int ci = 0; ci < knobsVt.getNumChildren(); ++ci)
+    {
+        auto child = knobsVt.getChild (ci);
+        if (! child.hasType (IDs::chuckKnob)) continue;
+        const int slot = (int) child.getProperty (IDs::parameter, -1);
+        if (slot < 0 || slot >= ChucKlavierParams::kMaxChuckModParams) continue;
+        slots_[slot].name     = child.getProperty (IDs::chuckGlobalName, "").toString();
+        slots_[slot].label    = child.getProperty (IDs::name, slots_[slot].name).toString();
+        slots_[slot].minVal   = (float) child.getProperty (IDs::start, 0.0f);
+        slots_[slot].maxVal   = (float) child.getProperty (IDs::end,   1.0f);
+        slots_[slot].defaultVal = (float) child.getProperty ("default", 0.5f);
+        slots_[slot].active   = slots_[slot].name.isNotEmpty();
+        // Restore slider value if present (before setupModulationMappings runs)
+        if (child.hasProperty (IDs::sliderval))
+        {
+            float sv = (float) child.getProperty (IDs::sliderval, 0.5f);
+            if (state.params.chuckMod[slot] != nullptr)
+                state.params.chuckMod[slot]->setParameterValue (sv);
+        }
+    }
+}
+
+// Write the current slot table back to the VT (called from reconcileSlots + setSlotLabel/Range).
+void ChucKlavierProcessor::saveSlotBindingsToVT()
+{
+    auto knobsVt = v.getOrCreateChildWithName (IDs::chuckKnobs, nullptr);
+    knobsVt.removeAllChildren (nullptr);
+    for (int i = 0; i < ChucKlavierParams::kMaxChuckModParams; ++i)
+    {
+        if (slots_[i].name.isEmpty()) continue;
+        auto child = juce::ValueTree (IDs::chuckKnob);
+        child.setProperty (IDs::parameter,      i,                 nullptr);
+        child.setProperty (IDs::chuckGlobalName, slots_[i].name,   nullptr);
+        child.setProperty (IDs::name,            slots_[i].label,  nullptr);
+        child.setProperty (IDs::start,           slots_[i].minVal, nullptr);
+        child.setProperty (IDs::end,             slots_[i].maxVal, nullptr);
+        child.setProperty ("default",            slots_[i].defaultVal, nullptr);
+        if (state.params.chuckMod[i] != nullptr)
+            child.setProperty (IDs::sliderval, state.params.chuckMod[i]->getCurrentValue(), nullptr);
+        knobsVt.appendChild (child, nullptr);
+    }
+}
+
+// Cache t_CKFLOAT* pointers for all active slots from the current VM.
+// Must be called while vmSuspended_=true (AT parked) or from prepareToPlay
+// (audio not yet running for this processor).
+void ChucKlavierProcessor::cacheGlobalPtrs()
+{
+    if (vm_ == nullptr) return;
+    auto* g = vm_->globals();
+    for (int i = 0; i < ChucKlavierParams::kMaxChuckModParams; ++i)
+    {
+        if (! slots_[i].active || slots_[i].name.isEmpty())
+        {
+            slots_[i].cachedPtr = nullptr;
+            continue;
+        }
+        const std::string name = slots_[i].name.toStdString();
+        // init_global_float ensures no null-entry in the map (see chuck_embedding.md)
+        g->init_global_float (name);
+        slots_[i].cachedPtr =
+            reinterpret_cast<double*> (g->get_ptr_to_global_float (name));
+    }
+}
+
+// Reconcile the stable slot→name mapping against the freshly-compiled script.
+// Parses //@knob annotations; keeps existing slot assignments for known names;
+// allocates free slots for new names; marks removed names as inactive (orphaned).
+// Updates the <chuckKnobs> VT child and caches fresh t_CKFLOAT* pointers.
+// Must be called on the message thread while vmSuspended_=true (AT parked).
+void ChucKlavierProcessor::reconcileSlots (const juce::String& script)
+{
+    auto parsed = parseScriptKnobs (script);
+
+    // Step 1: mark all currently-active slots inactive; we'll re-activate matched ones.
+    for (auto& sb : slots_)
+        sb.active = false;
+
+    // Step 2: for each parsed knob, find an existing slot with the same name or claim a free one.
+    for (const auto& pk : parsed)
+    {
+        // Find existing slot with this name (keeps slot index stable)
+        int targetSlot = -1;
+        for (int i = 0; i < ChucKlavierParams::kMaxChuckModParams; ++i)
+        {
+            if (slots_[i].name == pk.name)
+            {
+                targetSlot = i;
+                break;
+            }
+        }
+        if (targetSlot < 0)
+            targetSlot = findFreeSlot (slots_);
+        if (targetSlot < 0) continue;  // no free slots
+
+        slots_[targetSlot].name       = pk.name;
+        slots_[targetSlot].label      = pk.label;
+        slots_[targetSlot].minVal     = pk.minVal;
+        slots_[targetSlot].maxVal     = pk.maxVal;
+        slots_[targetSlot].defaultVal = pk.defaultVal;
+        slots_[targetSlot].active     = true;
+
+        // Set the parameter to the default value (normalized)
+        float normDefault = juce::jlimit (0.0f, 1.0f,
+            (pk.defaultVal - pk.minVal) / juce::jmax (1e-6f, pk.maxVal - pk.minVal));
+        if (state.params.chuckMod[targetSlot] != nullptr)
+            state.params.chuckMod[targetSlot]->setParameterValue (normDefault);
+
+        // Update the MODULATABLE_PARAMS VT entry for this slot so that the modulation
+        // system's setScalingValue() and updateScalingAudioThread() use the display range
+        // [minVal, maxVal] rather than the chowdsp parameter's native [0, 1] range.
+        // Without this, sliderVal (e.g. 12) passed to setScalingValue with start/end = 0/1
+        // gets clamped to 1, corrupting the scaling calculation.
+        {
+            auto modParamsVt = v.getChildWithName (IDs::MODULATABLE_PARAMS);
+            const juce::String paramId = juce::String ("ChuckMod") + juce::String (targetSlot);
+            auto modParamVt = modParamsVt.getChildWithProperty (IDs::parameter, paramId);
+            if (modParamVt.isValid())
+            {
+                modParamVt.setProperty (IDs::start,    pk.minVal,     nullptr);
+                modParamVt.setProperty (IDs::end,      pk.maxVal,     nullptr);
+                modParamVt.setProperty (IDs::sliderval, pk.defaultVal, nullptr);
+            }
+        }
+    }
+
+    // Step 3: cache fresh VM pointers for active slots.
+    cacheGlobalPtrs();
+
+    // Step 4: persist the updated table to the VT.
+    saveSlotBindingsToVT();
+}
+
+void ChucKlavierProcessor::setSlotLabel (int slot, const juce::String& label)
+{
+    if (slot < 0 || slot >= ChucKlavierParams::kMaxChuckModParams) return;
+    slots_[slot].label = label;
+    saveSlotBindingsToVT();
+}
+
+void ChucKlavierProcessor::setSlotRange (int slot, float minVal, float maxVal)
+{
+    if (slot < 0 || slot >= ChucKlavierParams::kMaxChuckModParams) return;
+    slots_[slot].minVal = minVal;
+    slots_[slot].maxVal = maxVal;
+    saveSlotBindingsToVT();
+
+    auto modParamsVt = v.getChildWithName (IDs::MODULATABLE_PARAMS);
+    const juce::String paramId = juce::String ("ChuckMod") + juce::String (slot);
+    auto modParamVt = modParamsVt.getChildWithProperty (IDs::parameter, paramId);
+    if (modParamVt.isValid())
+    {
+        modParamVt.setProperty (IDs::start, minVal, nullptr);
+        modParamVt.setProperty (IDs::end,   maxVal, nullptr);
+    }
 }
 
 void ChucKlavierProcessor::releaseResources()
@@ -258,6 +543,20 @@ void ChucKlavierProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
         {
             chuckInBuf_[size_t(i * 2)]     = L[i];
             chuckInBuf_[size_t(i * 2 + 1)] = R[i];
+        }
+
+        // Write denormalized values of active knob slots into ChucK globals.
+        // processContinuousModulations() (called above at line ~177) has already
+        // applied any mod offsets to state.params.chuckMod[i], so getCurrentValue()
+        // here reflects base + modulation.
+        for (int i = 0; i < ChucKlavierParams::kMaxChuckModParams; ++i)
+        {
+            if (! slots_[i].active || slots_[i].cachedPtr == nullptr) continue;
+            if (state.params.chuckMod[i] == nullptr) continue;
+            const float norm = state.params.chuckMod[i]->getCurrentValue();
+            *slots_[i].cachedPtr =
+                (double) (slots_[i].minVal + norm * (slots_[i].maxVal - slots_[i].minVal));
+            modulatedValues_[i].store (norm, std::memory_order_relaxed);
         }
 
         // Arm context pointers so the static MIDI-out callback can dispatch to us.

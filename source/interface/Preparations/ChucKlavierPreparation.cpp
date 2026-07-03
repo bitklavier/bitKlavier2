@@ -37,7 +37,7 @@ std::unique_ptr<SynthSection> ChucKlavierPreparation::getPrepPopup()
                 proc->getState(), proc->getState().params,
                 state.getProperty (IDs::uuid).toString(),
                 state,
-                open_gl, parent->getSynth(), nodeId, proc);
+                &_open_gl, parent->getSynth(), nodeId, proc);
         }
     return nullptr;
 }
