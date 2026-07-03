@@ -44,7 +44,7 @@ static constexpr std::array<std::pair<float, float>,
     /* 15 EQ         */ { 245.0f, 125.0f },
     /* 16 VST        */ { 245.0f, 125.0f },
     /* 17 Reverb       */ { 245.0f, 125.0f },
-    /* 18 ChucKlavier  */ { 500.0f, 400.0f },
+    /* 18 ChucKlavier  */ { 167.0f, 133.0f },
 }};
 
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
@@ -269,6 +269,7 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
             break;
         case chucklavier:
             info.setInfo("ChucKlavier", "Create ChucKlavier Preparation", "Edit", 0);
+            info.addDefaultKeypress('=', juce::ModifierKeys::noModifiers);
             break;
         case horizontallyAlignSelected:
             info.setInfo("Horizontally Align Selected", "Aligns Selected Preparations Horizontally", "Edit", 0);
@@ -535,8 +536,8 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             }
             case chucklavier:
             {
-                prepWidth  = 500.0f;
-                prepHeight = 400.0f;
+                prepWidth  = 167.0f;
+                prepHeight = 133.0f;
                 prepWidth  *= prepScale;
                 prepHeight *= prepScale;
                 juce::ValueTree t(IDs::chucklavier);
