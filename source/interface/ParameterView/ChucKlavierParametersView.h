@@ -4,15 +4,19 @@
 #pragma once
 
 #include "ChucKlavierProcessor.h"
+#include "ChucKCodeTokeniser.h"
 #include "FullInterface.h"
 #include "Identifiers.h"
+#include "open_gl_code_editor.h"
 #include "peak_meter_section.h"
 #include "synth_button.h"
 #include "synth_section.h"
 #include "synth_slider.h"
 #include "open_gl_image_component.h"
 
-class ChucKlavierParametersView : public SynthSection, public juce::Timer
+class ChucKlavierParametersView : public SynthSection,
+                                  public juce::Timer,
+                                  public juce::CodeDocument::Listener
 {
 public:
     ChucKlavierParametersView (chowdsp::PluginState& pluginState,
@@ -67,30 +71,28 @@ public:
         externalLevelMeter->setVolumeTooltip ("Level of external input (mic/line in standalone, sidechain in plugin)");
         addSubSection (externalLevelMeter.get());
 
-        // Script text editor — must add to hierarchy BEFORE setMultiLine,
-        // since setMultiLine triggers resized() which calls findValue() on parent_.
-        scriptEditor = std::make_unique<OpenGlTextEditor> ("chuckScript");
+        // Code editor — must add to hierarchy BEFORE any call that triggers resized(),
+        // since resized() calls findValue() on parent_ which asserts if parent_ is null.
+        tokeniser_ = std::make_unique<ChucKCodeTokeniser>();
+        scriptEditor = std::make_unique<OpenGlCodeEditor> (scriptDoc_, tokeniser_.get());
         addAndMakeVisible (scriptEditor.get());
         addOpenGlComponent (scriptEditor->getImageComponent());
 
-        scriptEditor->setMultiLine (true, true);
-        scriptEditor->setReturnKeyStartsNewLine (true);
-        scriptEditor->setScrollbarsShown (true);
-        scriptEditor->setPopupMenuEnabled (true);
         scriptEditor->setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 13.0f, juce::Font::plain));
-        scriptEditor->setColour (juce::TextEditor::backgroundColourId, juce::Colours::black.withAlpha (0.85f));
-        scriptEditor->setColour (juce::TextEditor::textColourId, juce::Colours::lightgreen);
-        scriptEditor->setColour (juce::TextEditor::outlineColourId, juce::Colours::darkgrey);
-        scriptEditor->setColour (juce::TextEditor::highlightColourId, juce::Colours::darkgreen.withAlpha (0.6f));
+        scriptEditor->setColourScheme (tokeniser_->getDefaultColourScheme());
+        scriptEditor->setColour (juce::CodeEditorComponent::backgroundColourId, juce::Colour (0xdd000000));
+        scriptEditor->setColour (juce::CodeEditorComponent::highlightColourId, juce::Colours::darkgreen.withAlpha (0.5f));
+        scriptEditor->setLineNumbersShown (true);
 
-        juce::String savedScript = prepVT_.getProperty (IDs::chuckScript, "");
-        if (savedScript.isEmpty())
-            savedScript = getDefaultScript();
-        scriptEditor->setText (savedScript, juce::dontSendNotification);
-
-        scriptEditor->onTextChange = [this] {
-            prepVT_.setProperty (IDs::chuckScript, scriptEditor->getText(), nullptr);
-        };
+        // Load saved script (or default) into the document before installing the listener,
+        // so the initial replaceAllContent does not trigger a spurious ValueTree write.
+        {
+            juce::String savedScript = prepVT_.getProperty (IDs::chuckScript, "");
+            if (savedScript.isEmpty())
+                savedScript = getDefaultScript();
+            scriptDoc_.replaceAllContent (savedScript);
+        }
+        scriptDoc_.addListener (this);
 
         // Status label — shows compile result or error under the editor.
         // Must be a PlainTextComponent (OpenGL-rendered) — plain juce::Label is
@@ -107,7 +109,7 @@ public:
         sendScriptButton->setText ("Send to VM");
         sendScriptButton->setTooltip ("Compile and hot-swap the script into the ChucK VM");
         addSynthButton (sendScriptButton.get(), true);
-        sendScriptButton->onClick = [this] { requestScriptSwap (scriptEditor->getText()); };
+        sendScriptButton->onClick = [this] { requestScriptSwap (scriptDoc_.getAllContent()); };
 
         muteButton_ = std::make_unique<SynthButton> ("mute");
         muteButton_->setText ("M");
@@ -158,6 +160,7 @@ public:
     {
         stopTimer();
         hotSwapTimer_.stopTimer();
+        if (scriptEditor) scriptEditor->stopTimer();
     }
 
     void paintBackground (juce::Graphics& g) override
@@ -178,13 +181,30 @@ public:
     std::unique_ptr<PeakMeterSection> inLevelMeter;
     std::unique_ptr<PeakMeterSection> externalLevelMeter;
 
-    std::unique_ptr<OpenGlTextEditor>    scriptEditor;
-    std::shared_ptr<PlainTextComponent> statusLabel;
+    juce::CodeDocument                    scriptDoc_;
+    std::unique_ptr<ChucKCodeTokeniser>   tokeniser_;
+    std::unique_ptr<OpenGlCodeEditor>     scriptEditor;
+    std::shared_ptr<PlainTextComponent>   statusLabel;
     std::unique_ptr<SynthButton>         sendScriptButton;
     std::unique_ptr<SynthButton>      muteButton_;
     std::unique_ptr<SynthButton>      soloButton_;
 
+    ~ChucKlavierParametersView() override
+    {
+        scriptDoc_.removeListener (this);
+    }
+
 private:
+    // CodeDocument::Listener — write script content back to the ValueTree on every edit.
+    void codeDocumentTextInserted (const juce::String&, int) override
+    {
+        prepVT_.setProperty (IDs::chuckScript, scriptDoc_.getAllContent(), nullptr);
+    }
+    void codeDocumentTextDeleted (int, int) override
+    {
+        prepVT_.setProperty (IDs::chuckScript, scriptDoc_.getAllContent(), nullptr);
+    }
+
     static juce::String getDefaultScript()
     {
         return juce::String (ChucKlavierProcessor::kDefaultScript);
@@ -193,7 +213,7 @@ private:
     void requestScriptSwap (const juce::String& newScript)
     {
         if (proc_ == nullptr) return;
-        pendingScript_ = newScript;
+        pendingScript_ = newScript;  // NOLINT: pendingScript_ updated before vmSuspended_
         proc_->vmParked_.store (false, std::memory_order_relaxed);
         proc_->vmSuspended_.store (true, std::memory_order_release);
         statusLabel->setColor (juce::Colours::yellow);
