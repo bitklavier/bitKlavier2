@@ -133,6 +133,10 @@ public:
     // Must be called with vmSuspended_=true (AT is parked and not touching vm_).
     bool doHotSwap (const std::string& script);
 
+    // Silence ChucKlavier by reloading the VM with the currently-running script.
+    // Called from SoundEngine::allNotesOff() on the message thread.
+    void allNotesOff();
+
     // Atomic handshake for hot-swap: MT sets vmSuspended_ true, AT acknowledges via vmParked_.
     std::atomic<bool> vmSuspended_ { false };
     std::atomic<bool> vmParked_    { false };

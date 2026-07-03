@@ -113,6 +113,34 @@ bool ChucKlavierProcessor::doHotSwap (const std::string& script)
     return true;
 }
 
+void ChucKlavierProcessor::allNotesOff()
+{
+    // If a hot-swap is already in flight, that swap will silence the VM — skip.
+    if (vmSuspended_.load (std::memory_order_acquire))
+        return;
+
+    // Reload the VM with the currently saved script.  This tears down every spork,
+    // UGen, and event the script built up, silencing all ChucK output instantly.
+    // Reading from v (the persisted ValueTree) gives us the last-compiled script,
+    // not any unsent edits in the editor buffer — intentional.
+    juce::String savedScript = v.getProperty (IDs::chuckScript, "");
+    const std::string script = savedScript.isNotEmpty()
+                               ? savedScript.toStdString()
+                               : std::string (kDefaultScript);
+
+    // Reset vmParked_ BEFORE asserting vmSuspended_ so the wait loop below waits
+    // for the AT to park in response to THIS request (not a stale flag from an
+    // earlier hot-swap).  Mirrors the exact ordering used by the Send-to-VM button.
+    vmParked_.store (false, std::memory_order_release);
+    vmSuspended_.store (true, std::memory_order_release);
+    while (!vmParked_.load (std::memory_order_acquire))
+        juce::Thread::sleep (1);
+
+    doHotSwap (script);
+
+    vmSuspended_.store (false, std::memory_order_release);
+}
+
 void ChucKlavierProcessor::releaseResources()
 {
     vm_.reset();
