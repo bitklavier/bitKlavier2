@@ -17,6 +17,54 @@
 thread_local ChucKlavierProcessor* ChucKlavierProcessor::g_currentProcessor = nullptr;
 
 // ---------------------------------------------------------------------------
+// Process-global ChucK stderr FIFO (RT-safe, no heap allocation on AT)
+// ---------------------------------------------------------------------------
+namespace {
+    constexpr int kChuckLogCapacity = 512;
+    constexpr int kChuckLogMsgLen   = 320;
+
+    struct ChuckLogEntry { char data[kChuckLogMsgLen]; };
+
+    juce::AbstractFifo                               g_chuckFifo { kChuckLogCapacity };
+    std::array<ChuckLogEntry, kChuckLogCapacity>     g_chuckBuf;
+
+    void pushChuckLog (const char* msg) noexcept
+    {
+        int start1, size1, start2, size2;
+        g_chuckFifo.prepareToWrite (1, start1, size1, start2, size2);
+        if (size1 > 0)
+            std::strncpy (g_chuckBuf[(size_t)start1].data, msg, kChuckLogMsgLen - 1);
+        g_chuckFifo.finishedWrite (size1 + size2);
+    }
+
+    void installStaticStderrCallback()
+    {
+        static std::once_flag once;
+        std::call_once (once, [] {
+            ChucK::setStderrCallback ([] (const char* msg) {
+                char prefixed[kChuckLogMsgLen];
+                const char* name = ChucKlavierProcessor::g_currentProcessor
+                                       ? ChucKlavierProcessor::g_currentProcessor->getDisplayName()
+                                       : "?";
+                std::snprintf (prefixed, kChuckLogMsgLen, "[%s] %s", name, msg);
+                pushChuckLog (prefixed);
+            });
+        });
+    }
+} // namespace
+
+bool ChucKlavierProcessor::popChuckLogLine (char* out, int outSize) noexcept
+{
+    int start1, size1, start2, size2;
+    g_chuckFifo.prepareToRead (1, start1, size1, start2, size2);
+    if (size1 == 0) return false;
+    std::strncpy (out, g_chuckBuf[(size_t)start1].data, (size_t)(outSize - 1));
+    out[outSize - 1] = '\0';
+    g_chuckFifo.finishedRead (1);
+    return true;
+}
+
+// ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
@@ -132,6 +180,11 @@ static int findFreeSlot (const std::array<ChucKlavierProcessor::SlotBinding,
 ChucKlavierProcessor::ChucKlavierProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um)
     : PluginBase (parent, vt, um, chucKlavierBusLayout())
 {
+    // Cache a short display name from the first 8 chars of the prep UUID.
+    const juce::String uuid = vt.getProperty (IDs::uuid, "?").toString();
+    const juce::String shortened = uuid.substring (0, 8);
+    std::strncpy (displayName_, shortened.toRawUTF8(), sizeof (displayName_) - 1);
+
     // Restore slot bindings from an existing <chuckKnobs> child (gallery load path).
     loadSlotBindingsFromVT();
 }
@@ -160,6 +213,8 @@ void ChucKlavierProcessor::tuningStateInvalidated()
 
 void ChucKlavierProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    installStaticStderrCallback();
+
     if (vm_ && vmSampleRate_ == sampleRate)
     {
         // Same sample rate — just recompile any saved script without recreating the VM.

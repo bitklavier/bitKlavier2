@@ -114,6 +114,16 @@ public:
         addSynthButton (sendScriptButton.get(), true);
         sendScriptButton->onClick = [this] { requestScriptSwap (scriptDoc_.getAllContent()); };
 
+        consoleButton_ = std::make_unique<SynthButton> ("chuckConsole");
+        consoleButton_->setText ("Console");
+        consoleButton_->setTooltip ("Show/hide the ChucK output console");
+        consoleButton_->setClickingTogglesState (false);
+        addSynthButton (consoleButton_.get(), true);
+        consoleButton_->onClick = [this] {
+            if (auto* fi = findParentComponentOfClass<FullInterface>())
+                fi->toggleChuckConsole();
+        };
+
         muteButton_ = std::make_unique<SynthButton> ("mute");
         muteButton_->setText ("M");
         muteButton_->setTooltip ("Mute this preparation. Option-click to mute only this one.");
@@ -189,6 +199,7 @@ public:
     std::unique_ptr<OpenGlCodeEditor>     scriptEditor;
     std::shared_ptr<PlainTextComponent>   statusLabel;
     std::unique_ptr<SynthButton>         sendScriptButton;
+    std::unique_ptr<SynthButton>         consoleButton_;
     std::unique_ptr<SynthButton>      muteButton_;
     std::unique_ptr<SynthButton>      soloButton_;
 
@@ -220,9 +231,48 @@ private:
         return juce::String (ChucKlavierProcessor::kDefaultScript);
     }
 
+    // Returns true if the script (after stripping comments) contains a <<< print expression.
+    static bool containsChuckPrint (const juce::String& script)
+    {
+        juce::String stripped;
+        stripped.preallocateBytes ((size_t) script.length());
+        bool inLineComment  = false;
+        bool inBlockComment = false;
+        for (int i = 0; i < script.length(); ++i)
+        {
+            const juce::juce_wchar c  = script[i];
+            const juce::juce_wchar c2 = (i + 1 < script.length()) ? script[i + 1] : 0;
+
+            if (inLineComment)
+            {
+                if (c == '\n') inLineComment = false;
+                continue;
+            }
+            if (inBlockComment)
+            {
+                if (c == '*' && c2 == '/') { inBlockComment = false; ++i; }
+                continue;
+            }
+            if (c == '/' && c2 == '/')  { inLineComment  = true;  continue; }
+            if (c == '/' && c2 == '*')  { inBlockComment = true;  ++i; continue; }
+            stripped += c;
+        }
+        return stripped.contains ("<<<");
+    }
+
     void requestScriptSwap (const juce::String& newScript)
     {
         if (proc_ == nullptr) return;
+
+        // Auto-show console if the script uses <<<>>> print expressions.
+        if (containsChuckPrint (newScript))
+            if (auto* fi = findParentComponentOfClass<FullInterface>())
+                fi->showChuckConsole();
+
+        // Separator line so reload boundaries are visible in the console.
+        if (auto* fi = findParentComponentOfClass<FullInterface>())
+            fi->appendChuckLogMT ("--- " + juce::String::fromUTF8 (proc_->getDisplayName()) + ": reload ---");
+
         pendingScript_ = newScript;  // NOLINT: pendingScript_ updated before vmSuspended_
         proc_->vmParked_.store (false, std::memory_order_relaxed);
         proc_->vmSuspended_.store (true, std::memory_order_release);

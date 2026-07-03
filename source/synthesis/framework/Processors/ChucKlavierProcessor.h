@@ -211,6 +211,14 @@ public:
     // multiple concurrent ChucKlavier instances on the same audio thread are safe.
     static thread_local ChucKlavierProcessor* g_currentProcessor;
 
+    // Short name (first 8 chars of UUID) used to prefix console output lines.
+    char displayName_[16] {};
+    const char* getDisplayName() const noexcept { return displayName_; }
+
+    // Pop one line from the process-global ChucK stderr FIFO.
+    // Returns false if the queue is empty. Safe to call from any thread.
+    static bool popChuckLogLine (char* out, int outSize) noexcept;
+
     // Static trampoline registered with ChucK via listenForGlobalEvent.
     // Fires synchronously inside ChucK::run() on the audio thread.
     static void onMidiOutFromVM();

@@ -8,6 +8,7 @@
 #ifndef BITKLAVIER2_FULLINTERFACE_H
 #define BITKLAVIER2_FULLINTERFACE_H
 
+#include <deque>
 #include "sections/header_section.h"
 #include "sections/footer_section.h"
 #include "sections/main_section.h"
@@ -15,6 +16,8 @@
 #include "sections/popup_browser.h"
 #include "valuetree_utils/value_tree_debugger.h"
 //#include "buffer_debugger.h"
+
+class ChucKConsolePanel;
 
 class TestSection;
 class AboutSection;
@@ -47,10 +50,7 @@ public :
 
     }
 
-    void timerCallback() override
-    {
-        open_gl_context_.triggerRepaint();
-    }
+    void timerCallback() override;
 
     int getPixelMultiple() const override { return pixel_multiple_; }
     void copySkinValues(const Skin& skin);
@@ -97,11 +97,21 @@ public :
     void hideSoundsetSelector();
     void clearFooterLiveKeys();
 
+    // ChucK console: show (lazy-create + dump backlog), toggle visibility.
+    void showChuckConsole();
+    void toggleChuckConsole();
+    // Inject a line from the message thread (e.g. reload separators).
+    void appendChuckLogMT (const juce::String& line);
+
     std::unique_ptr<SinglePopupSelector> popup_selector_;
     std::unique_ptr<PreparationPopup> prep_popup;
     std::unique_ptr<PreparationPopup> mod_popup;
     std::unique_ptr<PopupDisplay> popup_display_1_;
     std::unique_ptr<PopupDisplay> popup_display_2_;
+    std::unique_ptr<ChucKConsolePanel> chuck_console_;
+
+    static constexpr int kChuckBacklogSize = 500;
+    std::deque<juce::String> chuckBacklog_;
 
     SynthSection* full_screen_section_;
     std::unique_ptr<AboutSection> about_section_;

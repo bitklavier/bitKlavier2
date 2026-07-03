@@ -117,9 +117,17 @@ void ChucKlavierParametersView::resized()
     if (knobPanel_ != nullptr)
         knobPanel_->setBounds (bounds.removeFromRight (bounds.getWidth() / 4));
 
-    // Button: bottom flush with meter bottom; status above it, taller than before.
+    // Button row: Send (left ~2/3) + Console (right ~1/3), bottom flush with meter.
     const int meterBottom = levelMeter->getBottom();
-    sendScriptButton->setBounds (bounds.getX(), meterBottom - buttonHeight, bounds.getWidth(), buttonHeight);
+    {
+        constexpr int kConsoleW = 70;
+        constexpr int kBtnGap   = 4;
+        const int sendW = bounds.getWidth() - kConsoleW - kBtnGap;
+        const int btnY  = meterBottom - buttonHeight;
+        sendScriptButton->setBounds (bounds.getX(), btnY, sendW, buttonHeight);
+        if (consoleButton_ != nullptr)
+            consoleButton_->setBounds (bounds.getX() + sendW + kBtnGap, btnY, kConsoleW, buttonHeight);
+    }
 
     const int statusTop = meterBottom - buttonHeight - smallPadding - statusHeight;
     statusLabel->setBounds (bounds.getX(), statusTop, bounds.getWidth(), statusHeight);
