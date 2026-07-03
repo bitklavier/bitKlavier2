@@ -241,7 +241,13 @@ void ChucKlavierProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 
         if (tempo != nullptr)
         {
-            if (auto* ptr = vm_->globals()->get_ptr_to_global_float ("bkTempoBPM"))
+            auto* g = vm_->globals();
+            // init_global_float ensures the container exists before we take its address.
+            // Without this, get_ptr_to_global_float uses operator[] which inserts nullptr
+            // on a fresh VM, preventing the script's own 'global float bkTempoBPM'
+            // declaration from allocating the container → crash on first script read.
+            g->init_global_float ("bkTempoBPM");
+            if (auto* ptr = g->get_ptr_to_global_float ("bkTempoBPM"))
                 *ptr = (t_CKFLOAT) tempo->getState().params.tempoParam->getCurrentValue();
         }
 
