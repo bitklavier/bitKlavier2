@@ -215,35 +215,37 @@ void ChucKlavierProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
 {
     installStaticStderrCallback();
 
-    if (vm_ && vmSampleRate_ == sampleRate)
-    {
-        // Same sample rate — just recompile any saved script without recreating the VM.
-        // This avoids a full teardown when prepareToPlay is called multiple times.
-    }
-    else
-    {
-        vm_.reset();
-        vm_ = std::make_unique<ChucK>();
-
-        vm_->setParam (CHUCK_PARAM_SAMPLE_RATE,     (t_CKINT) sampleRate);
-        vm_->setParam (CHUCK_PARAM_INPUT_CHANNELS,  (t_CKINT) 2);
-        vm_->setParam (CHUCK_PARAM_OUTPUT_CHANNELS, (t_CKINT) 2);
-        vm_->setParam (CHUCK_PARAM_VM_HALT,         (t_CKINT) 0);
-
-        // Route ChucK's stderr to our captured string rather than the console.
-        vm_->setCherrCallback ([] (const char* msg) {
-            // Stateless callback — nothing to do here; callers read EM_lasterror() directly.
-            (void) msg;
-        });
-
-        vm_->init();
-        vm_->start();
-        vm_->globals()->listenForGlobalEvent ("bkMidiOutEvent", &ChucKlavierProcessor::onMidiOutFromVM, TRUE);
-        vmSampleRate_ = sampleRate;
-    }
-
     chuckInBuf_.resize  ((size_t) samplesPerBlock * 2, 0.0f);
     chuckOutBuf_.resize ((size_t) samplesPerBlock * 2, 0.0f);
+
+    // Guard against duplicate calls at the same sample rate.
+    // JUCE's AudioProcessorGraph::addNode (UpdateKind::sync) calls prepareToPlay a second
+    // time on the message thread immediately after PreparationList already called it
+    // explicitly. Re-compiling into the same VM would spork a second copy of every shred;
+    // script-local arrays (e.g. voiceNote[]) diverge between copies, and
+    // signalGlobalEvent wakes only ONE waiter — so note-off lands in the wrong copy
+    // and is silently dropped.
+    if (vm_ && vmSampleRate_ == sampleRate)
+        return;
+
+    vm_.reset();
+    vm_ = std::make_unique<ChucK>();
+
+    vm_->setParam (CHUCK_PARAM_SAMPLE_RATE,     (t_CKINT) sampleRate);
+    vm_->setParam (CHUCK_PARAM_INPUT_CHANNELS,  (t_CKINT) 2);
+    vm_->setParam (CHUCK_PARAM_OUTPUT_CHANNELS, (t_CKINT) 2);
+    vm_->setParam (CHUCK_PARAM_VM_HALT,         (t_CKINT) 0);
+
+    // Route ChucK's stderr to our captured string rather than the console.
+    vm_->setCherrCallback ([] (const char* msg) {
+        // Stateless callback — nothing to do here; callers read EM_lasterror() directly.
+        (void) msg;
+    });
+
+    vm_->init();
+    vm_->start();
+    vm_->globals()->listenForGlobalEvent ("bkMidiOutEvent", &ChucKlavierProcessor::onMidiOutFromVM, TRUE);
+    vmSampleRate_ = sampleRate;
 
     // Compile the saved script, or the default passthrough if none.
     juce::String savedScript = v.getProperty (IDs::chuckScript, "");
