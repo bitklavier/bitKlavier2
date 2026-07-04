@@ -307,10 +307,21 @@ void ChucKlavierProcessor::allNotesOff()
     // earlier hot-swap).  Mirrors the exact ordering used by the Send-to-VM button.
     vmParked_.store (false, std::memory_order_release);
     vmSuspended_.store (true, std::memory_order_release);
-    while (!vmParked_.load (std::memory_order_acquire))
-        juce::Thread::sleep (1);
 
-    doHotSwap (script);
+    // Bounded wait: if the AT never acks within ~200 ms it isn't running
+    // (e.g. called from SoundEngine::shutdown() after shutdownAudio() has already
+    // stopped the audio callback).  In that case the old VM cannot be touched, so
+    // doHotSwap is skipped — the graph clear / destructor will free vm_ safely.
+    // Mirrors HotSwapTimer::timerCallback (40 × 5 ms = 200 ms).
+    int waited = 0;
+    while (!vmParked_.load (std::memory_order_acquire) && waited < 200)
+    {
+        juce::Thread::sleep (1);
+        ++waited;
+    }
+
+    if (vmParked_.load (std::memory_order_acquire))
+        doHotSwap (script);
 
     vmSuspended_.store (false, std::memory_order_release);
 }
