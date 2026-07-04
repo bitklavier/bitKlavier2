@@ -130,6 +130,21 @@ public:
             if (proc_) proc_->openFloatingEditor();
         };
 
+        // Find bar — OpenGlTextEditor so it's visible under the OpenGL canvas.
+        findField_ = std::make_unique<OpenGlTextEditor> ("chuckFind");
+        findField_->setMonospace();
+        findField_->setFontSize (12.0f);
+        findField_->setTextToShowWhenEmpty (juce::String::fromUTF8 ("Find\xe2\x80\xa6"), juce::Colours::grey);
+        findField_->onReturnKey = [this] { runFind (! juce::ModifierKeys::currentModifiers.isShiftDown()); };
+        findField_->onEscapeKey = [this] { hideFindBar(); };
+        addAndMakeVisible (findField_.get());
+        addOpenGlComponent (findField_->getImageComponent());
+        findField_->setVisible (false);
+
+        scriptEditor->onFindShortcut     = [this] { showFindBar(); };
+        scriptEditor->onFindNextShortcut = [this] { if (lastFindNeedle_.isNotEmpty()) runFind (true);  else showFindBar(); };
+        scriptEditor->onFindPrevShortcut = [this] { if (lastFindNeedle_.isNotEmpty()) runFind (false); else showFindBar(); };
+
         muteButton_ = std::make_unique<SynthButton> ("mute");
         muteButton_->setText ("M");
         muteButton_->setTooltip ("Mute this preparation. Option-click to mute only this one.");
@@ -383,6 +398,61 @@ private:
         return -1;
     }
 
+    // ── Find bar ──────────────────────────────────────────────────────────────
+
+    void showFindBar()
+    {
+        if (scriptEditor != nullptr)
+        {
+            auto sel = scriptEditor->getHighlightedRegion();
+            if (! sel.isEmpty())
+            {
+                auto text = scriptEditor->getTextInRange (sel);
+                if (text.isNotEmpty())
+                {
+                    findField_->setText (text);
+                    findField_->selectAll();
+                }
+            }
+        }
+        findField_->setVisible (true);
+        findBarVisible_ = true;
+        resized();
+        findField_->grabKeyboardFocus();
+    }
+
+    void hideFindBar()
+    {
+        findField_->setVisible (false);
+        findBarVisible_ = false;
+        resized();
+        if (scriptEditor != nullptr)
+            scriptEditor->grabKeyboardFocus();
+    }
+
+    void runFind (bool forward)
+    {
+        if (findField_ == nullptr || scriptEditor == nullptr) return;
+        auto text = findField_->getText();
+        if (text.isEmpty()) return;
+        lastFindNeedle_ = text;
+        bool ok = forward ? scriptEditor->findNext (text) : scriptEditor->findPrev (text);
+        if (! ok) flashFindNoMatch();
+    }
+
+    void flashFindNoMatch()
+    {
+        findField_->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0xffcc4400));
+        findField_->redoImage();
+        juce::Timer::callAfterDelay (200, [this] {
+            if (findField_ != nullptr)
+            {
+                findField_->removeColour (juce::TextEditor::backgroundColourId);
+                findField_->redoImage();
+            }
+        });
+    }
+
     // Separate juce::Timer for hot-swap so it can run at 5ms without conflicting
     // with the 50ms mute/solo poll on the outer timer.
     struct HotSwapTimer : public juce::Timer
@@ -405,4 +475,9 @@ private:
     OpenGlWrapper*                        opengl_  = nullptr;
     juce::String                          pendingScript_;
     std::unique_ptr<ChucKKnobPanel>       knobPanel_;
+
+    // Find bar
+    std::unique_ptr<OpenGlTextEditor>     findField_;
+    bool                                  findBarVisible_ = false;
+    juce::String                          lastFindNeedle_;
 };

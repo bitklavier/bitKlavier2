@@ -3,6 +3,7 @@
 
 #include "ChucKlavierFloatingEditor.h"
 #include "ChucKlavierProcessor.h"
+#include "default_look_and_feel.h"
 
 // ─── static members ──────────────────────────────────────────────────────────
 
@@ -74,6 +75,10 @@ void ChucKlavierFloatingEditorContent::CompileTimer::timerCallback()
 ChucKlavierFloatingEditorContent::ChucKlavierFloatingEditorContent (ChucKlavierProcessor& proc)
     : proc_ (proc), doc_ (proc.getScriptDoc())
 {
+    // Apply the plugin's dark look-and-feel so buttons and text fields match
+    // the in-popup editor style.
+    setLookAndFeel (DefaultLookAndFeel::instance());
+
     tokeniser_    = std::make_unique<ChucKCodeTokeniser>();
     compileTimer_ = std::make_unique<CompileTimer> (*this);
 
@@ -97,11 +102,28 @@ ChucKlavierFloatingEditorContent::ChucKlavierFloatingEditorContent (ChucKlavierP
     statusLabel_->setFont (juce::Font (12.0f));
     statusLabel_->setJustificationType (juce::Justification::centredLeft);
     addAndMakeVisible (statusLabel_.get());
+
+    // Find bar — OpenGlTextEditor matches the popup's find-bar style.
+    // In this software-rendered window the GL texture is unused; the component
+    // renders via juce::TextEditor::paint() like any normal text field.
+    findField_ = std::make_unique<OpenGlTextEditor> ("chuckFloatFind");
+    findField_->setMonospace();
+    findField_->setFontSize (12.0f);
+    findField_->setTextToShowWhenEmpty (juce::String::fromUTF8 ("Find\xe2\x80\xa6"), juce::Colours::grey);
+    findField_->onReturnKey = [this] { runFind (! juce::ModifierKeys::currentModifiers.isShiftDown()); };
+    findField_->onEscapeKey = [this] { hideFindBar(); };
+    addAndMakeVisible (findField_.get());
+    findField_->setVisible (false);
+
+    editor_->onFindShortcut     = [this] { showFindBar(); };
+    editor_->onFindNextShortcut = [this] { if (lastFindNeedle_.isNotEmpty()) runFind (true);  else showFindBar(); };
+    editor_->onFindPrevShortcut = [this] { if (lastFindNeedle_.isNotEmpty()) runFind (false); else showFindBar(); };
 }
 
 ChucKlavierFloatingEditorContent::~ChucKlavierFloatingEditorContent()
 {
     compileTimer_->stopTimer();
+    setLookAndFeel (nullptr);
 }
 
 void ChucKlavierFloatingEditorContent::resized()
@@ -110,12 +132,22 @@ void ChucKlavierFloatingEditorContent::resized()
     const int btnW    = 90;
     const int gap     = 6;
     const int leftPad = 8;   // clears the window's rounded corner
+    const int findH   = 22;
     auto bounds       = getLocalBounds();
+
     auto bottomRow    = bounds.removeFromBottom (btnH);
     bottomRow.removeFromLeft (leftPad);
     compileButton_->setBounds (bottomRow.removeFromLeft (btnW));
     bottomRow.removeFromLeft (gap);
     statusLabel_->setBounds (bottomRow);
+
+    if (findBarVisible_ && findField_ != nullptr)
+    {
+        auto findRow = bounds.removeFromTop (findH);
+        findRow.removeFromLeft (leftPad);
+        findField_->setBounds (findRow);
+    }
+
     editor_->setBounds (bounds);
 }
 
@@ -132,6 +164,61 @@ void ChucKlavierFloatingEditorContent::compile()
     proc_.vmParked_.store (false, std::memory_order_relaxed);
     proc_.vmSuspended_.store (true, std::memory_order_release);
     compileTimer_->start (doc_.getAllContent());
+}
+
+// ─── find bar helpers ────────────────────────────────────────────────────────
+
+void ChucKlavierFloatingEditorContent::showFindBar()
+{
+    if (editor_ != nullptr)
+    {
+        auto sel = editor_->getHighlightedRegion();
+        if (! sel.isEmpty())
+        {
+            auto text = editor_->getTextInRange (sel);
+            if (text.isNotEmpty())
+            {
+                findField_->setText (text);
+                findField_->selectAll();
+            }
+        }
+    }
+    findField_->setVisible (true);
+    findBarVisible_ = true;
+    resized();
+    findField_->grabKeyboardFocus();
+}
+
+void ChucKlavierFloatingEditorContent::hideFindBar()
+{
+    findField_->setVisible (false);
+    findBarVisible_ = false;
+    resized();
+    if (editor_ != nullptr)
+        editor_->grabKeyboardFocus();
+}
+
+void ChucKlavierFloatingEditorContent::runFind (bool forward)
+{
+    if (findField_ == nullptr || editor_ == nullptr) return;
+    auto text = findField_->getText();
+    if (text.isEmpty()) return;
+    lastFindNeedle_ = text;
+    bool ok = forward ? editor_->findNext (text) : editor_->findPrev (text);
+    if (! ok) flashFindNoMatch();
+}
+
+void ChucKlavierFloatingEditorContent::flashFindNoMatch()
+{
+    findField_->setColour (juce::TextEditor::backgroundColourId, juce::Colour (0xffcc4400));
+    findField_->repaint();
+    juce::Timer::callAfterDelay (200, [this] {
+        if (findField_ != nullptr)
+        {
+            findField_->removeColour (juce::TextEditor::backgroundColourId);
+            findField_->repaint();
+        }
+    });
 }
 
 // ─── floating window ─────────────────────────────────────────────────────────

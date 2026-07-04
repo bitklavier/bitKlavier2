@@ -139,10 +139,20 @@ void ChucKlavierParametersView::resized()
 
     const int statusTop = meterBottom - buttonHeight - smallPadding - statusHeight;
     statusLabel->setBounds (bounds.getX(), statusTop, bounds.getWidth(), statusHeight);
-
     const int editorBottom = statusTop - smallPadding;
-    if (bounds.getHeight() > 0 && editorBottom > bounds.getY())
-        scriptEditor->setBounds (bounds.withBottom (editorBottom));
+
+    // Find bar sits at the very top of the editor area when visible.
+    constexpr int kFindH   = 22;
+    constexpr int kFindGap = 4;
+    int editorTop = bounds.getY();
+    if (findBarVisible_ && findField_ != nullptr)
+    {
+        findField_->setBounds (bounds.getX(), editorTop, bounds.getWidth(), kFindH);
+        editorTop += kFindH + kFindGap;
+    }
+
+    if (editorBottom > editorTop)
+        scriptEditor->setBounds (juce::Rectangle<int> (bounds.getX(), editorTop, bounds.getWidth(), editorBottom - editorTop));
 
     SynthSection::resized();
 }

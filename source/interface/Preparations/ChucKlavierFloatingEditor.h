@@ -27,6 +27,11 @@ public:
 
     void compile();
 
+    void showFindBar();
+    void hideFindBar();
+    void runFind (bool forward);
+    void flashFindNoMatch();
+
 private:
     ChucKlavierProcessor&                proc_;
     juce::CodeDocument&                  doc_;
@@ -34,6 +39,9 @@ private:
     std::unique_ptr<OpenGlCodeEditor>    editor_;
     std::unique_ptr<juce::TextButton>    compileButton_;
     std::unique_ptr<juce::Label>         statusLabel_;
+    std::unique_ptr<OpenGlTextEditor>    findField_;
+    bool                                 findBarVisible_ = false;
+    juce::String                         lastFindNeedle_;
 
     void setStatus (const juce::String& text, juce::Colour colour);
 

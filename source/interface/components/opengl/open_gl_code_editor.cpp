@@ -110,7 +110,7 @@ void OpenGlCodeEditor::insertTextAtCaret (const juce::String& textToInsert)
     juce::CodeEditorComponent::insertTextAtCaret (textToInsert);
 }
 
-// ─── keyPressed (smart backspace) ────────────────────────────────────────────
+// ─── keyPressed (zoom + find shortcuts + smart backspace) ────────────────────
 
 bool OpenGlCodeEditor::keyPressed (const juce::KeyPress& key)
 {
@@ -125,10 +125,86 @@ bool OpenGlCodeEditor::keyPressed (const juce::KeyPress& key)
         if (ch == '0')               { setFontSize (defaultFontSize_);     return true; }
     }
 
+    // Find shortcuts — Cmd+F open bar, Cmd+G next, Shift+Cmd+G previous.
+    // Check both lower and upper since JUCE/macOS may report either for letter+modifier combos.
+    if (key.getModifiers().isCommandDown() && ! key.getModifiers().isAltDown())
+    {
+        const int ch = key.getKeyCode();
+        const bool shift = key.getModifiers().isShiftDown();
+        if (! shift && (ch == 'f' || ch == 'F')) { if (onFindShortcut)     onFindShortcut();     return true; }
+        if (! shift && (ch == 'g' || ch == 'G')) { if (onFindNextShortcut) onFindNextShortcut(); return true; }
+        if (  shift && (ch == 'g' || ch == 'G')) { if (onFindPrevShortcut) onFindPrevShortcut(); return true; }
+    }
+
     if (! isReadOnly() && key == juce::KeyPress::backspaceKey && trySmartBackspace())
         return true;
 
     return juce::CodeEditorComponent::keyPressed (key);
+}
+
+// ─── findNext / findPrev ─────────────────────────────────────────────────────
+
+bool OpenGlCodeEditor::findNext (const juce::String& needle, bool caseSensitive)
+{
+    if (needle.isEmpty())
+        return false;
+
+    auto& doc    = getDocument();
+    auto content = doc.getAllContent();
+    int docLen   = content.length();
+    int needleLen = needle.length();
+
+    // Start from the end of the current selection (or caret) to advance past current match.
+    int startPos = getHighlightedRegion().isEmpty() ? getCaretPos().getPosition()
+                                                    : getHighlightedRegion().getEnd();
+
+    int found = caseSensitive ? content.indexOf (startPos, needle)
+                              : content.indexOfIgnoreCase (startPos, needle);
+
+    if (found < 0 && startPos > 0)  // wrap around
+        found = caseSensitive ? content.indexOf (0, needle)
+                              : content.indexOfIgnoreCase (0, needle);
+
+    if (found < 0 || found + needleLen > docLen)
+        return false;
+
+    setHighlightedRegion (juce::Range<int> (found, found + needleLen));
+    int line = juce::CodeDocument::Position (doc, found).getLineNumber();
+    scrollToLine (line);
+    juce::MessageManager::callAsync ([this] { redoImage(); });
+    return true;
+}
+
+bool OpenGlCodeEditor::findPrev (const juce::String& needle, bool caseSensitive)
+{
+    if (needle.isEmpty())
+        return false;
+
+    auto& doc     = getDocument();
+    auto content  = doc.getAllContent();
+    int docLen    = content.length();
+    int needleLen = needle.length();
+
+    // Start from the beginning of the current selection so we move past it backwards.
+    int startPos = getHighlightedRegion().isEmpty() ? getCaretPos().getPosition()
+                                                    : getHighlightedRegion().getStart();
+
+    auto searchIn = content.substring (0, juce::jmax (0, startPos));
+    int found = caseSensitive ? searchIn.lastIndexOf (needle)
+                              : searchIn.lastIndexOfIgnoreCase (needle);
+
+    if (found < 0)  // wrap around — search entire document
+        found = caseSensitive ? content.lastIndexOf (needle)
+                              : content.lastIndexOfIgnoreCase (needle);
+
+    if (found < 0 || found + needleLen > docLen)
+        return false;
+
+    setHighlightedRegion (juce::Range<int> (found, found + needleLen));
+    int line = juce::CodeDocument::Position (doc, found).getLineNumber();
+    scrollToLine (line);
+    juce::MessageManager::callAsync ([this] { redoImage(); });
+    return true;
 }
 
 bool OpenGlCodeEditor::trySmartBackspace()

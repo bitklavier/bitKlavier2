@@ -74,6 +74,20 @@ public:
     static void broadcastFontSize (float newSize);
     static float getGlobalFontSize() noexcept { return s_globalFontSize_.load(); }
 
+    // Find/search — wraps around silently. Returns true if a match was found.
+    bool findNext (const juce::String& needle, bool caseSensitive = false);
+    bool findPrev (const juce::String& needle, bool caseSensitive = false);
+
+    // Set these to wire up keyboard shortcuts. Called from keyPressed when:
+    //   onFindShortcut:     Cmd+F  (open find bar)
+    //   onFindNextShortcut: Cmd+G  (next match)
+    //   onFindPrevShortcut: Shift+Cmd+G  (previous match)
+    // All three work in both editable and read-only modes.
+    // Leaving a callback nullptr is safe — the key is consumed but nothing happens.
+    std::function<void()> onFindShortcut;
+    std::function<void()> onFindNextShortcut;
+    std::function<void()> onFindPrevShortcut;
+
 private:
     void timerCallback() override { redoImage(); }
 
