@@ -420,6 +420,12 @@ void FullInterface::removeAllGuiListeners() {
         main_->removeAllGuiListeners();
 }
 
+void FullInterface::clearPreparationPopups()
+{
+    if (prep_popup) prep_popup->clearContent();
+    if (mod_popup)  mod_popup->clearContent();
+}
+
 void FullInterface::popupDisplay (juce::Component* source, const std::string& text, juce::BubbleComponent::BubblePlacement placement, bool primary)
 {
     PopupDisplay* display = primary ? popup_display_1_.get() : popup_display_2_.get();

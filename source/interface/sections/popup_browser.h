@@ -79,6 +79,7 @@ public:
     void resized() override;
 
     void setContent(std::unique_ptr<SynthSection>&&, const juce::ValueTree &v);
+    void clearContent();
 
     void buttonClicked(juce::Button* clicked_button) override;
 

@@ -800,7 +800,11 @@ static void collectSoundsetRefsRecursive (const juce::ValueTree& node,
 bool SynthBase::loadGalleryFromValueTree (const juce::ValueTree& state)
 {
     if (auto* gui = getGuiInterface())
+    {
         gui->removeAllGuiListeners();
+        if (auto* fi = gui->getGui())
+            fi->clearPreparationPopups();
+    }
 
     pauseProcessing (true);
     clearAllBackend();
@@ -888,7 +892,11 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     // engine_->resetEngine();
 
     if (auto* gui = getGuiInterface())
+    {
         gui->removeAllGuiListeners(); // 1) detach GUI from backend FIRST
+        if (auto* fi = gui->getGui())
+            fi->clearPreparationPopups();
+    }
 
     pauseProcessing(true);
     clearAllBackend();               // 2) now it’s safe to destroy lists
