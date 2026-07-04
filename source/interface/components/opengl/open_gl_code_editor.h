@@ -48,9 +48,14 @@ public:
         // paintEntireComponent captures child ScrollBars into the GL texture.
         image_component_->paintEntireComponent (true);
         startTimer (33); // ~30 Hz — drives caret blink + edits
+        s_liveEditors_.add (this);
     }
 
-    ~OpenGlCodeEditor() override { stopTimer(); }
+    ~OpenGlCodeEditor() override
+    {
+        stopTimer();
+        s_liveEditors_.removeFirstMatchingValue (this);
+    }
 
     // Overrides — see open_gl_code_editor.cpp for implementations.
     void handleReturnKey() override;
@@ -58,6 +63,16 @@ public:
     bool keyPressed (const juce::KeyPress& key) override;
     void paint (juce::Graphics& g) override;
     void caretPositionMoved() override;
+
+    // Font-size zoom — Cmd+= / Cmd+- / Cmd+0. Affects all live editors (shared global).
+    void setFontSize (float newSize);
+    float getFontSize() const noexcept { return getFont().getHeight(); }
+    // Mark this editor's current font size as the reset target for Cmd+0.
+    void setDefaultFontSize (float size) noexcept { defaultFontSize_ = size; }
+
+    // Called by setFontSize to propagate the change to every live OpenGlCodeEditor.
+    static void broadcastFontSize (float newSize);
+    static float getGlobalFontSize() noexcept { return s_globalFontSize_.load(); }
 
 private:
     void timerCallback() override { redoImage(); }
@@ -73,10 +88,19 @@ private:
     // Stashed from ctor; nullptr for the read-only console panel.
     juce::CodeTokeniser* tokeniser_ = nullptr;
 
+    // Font size at construction — Cmd+0 resets to this value.
+    float defaultFontSize_ = 13.0f;
+
     // Positions of the matched brace pair; recomputed on every caret move.
     // Not position-maintained because updateBraceMatch() fires on every edit.
     juce::CodeDocument::Position braceA_, braceB_;
     bool braceMatchValid_ = false;
+
+    // Global font size shared across all live editors. 0 = "use default".
+    static std::atomic<float> s_globalFontSize_;
+
+    // Registry of all live editors so broadcastFontSize can reach them.
+    static juce::Array<OpenGlCodeEditor*, juce::CriticalSection> s_liveEditors_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OpenGlCodeEditor)
 };

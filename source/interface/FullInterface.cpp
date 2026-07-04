@@ -29,6 +29,7 @@
 #include "loading_section.h"
 #include "ChucKConsolePanel.h"
 #include "ChucKlavierProcessor.h"
+#include "ChucKlavierFloatingEditor.h"
 
 FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommandManager& _manager, SynthGuiInterface* _interface)
     : SynthSection ("full_interface"), width_ (0), resized_width_ (0), last_render_scale_ (0.0f), display_scale_ (1.0f), pixel_multiple_ (1), unsupported_ (false), animate_ (true), enable_redo_background_ (true), open_gl_ (open_gl_context_),
@@ -134,6 +135,9 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
 
 FullInterface::~FullInterface()
 {
+    // Close all floating script editors before GL context detaches and component
+    // hierarchy tears down. Must run on the message thread (called from plugin editor dtor).
+    ChucKlavierFloatingEditor::closeAll();
     if (synthInterface_)
         synthInterface_->getSynth()->user_prefs->tree.removeListener (this);
     open_gl_context_.detach();

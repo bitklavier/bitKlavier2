@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ChucKlavierProcessor.h"
+#include "ChucKlavierFloatingEditor.h"
 #include "ChucKCodeTokeniser.h"
 #include "ChucKKnobPanel.h"
 #include "FullInterface.h"
@@ -75,26 +76,22 @@ public:
 
         // Code editor — must add to hierarchy BEFORE any call that triggers resized(),
         // since resized() calls findValue() on parent_ which asserts if parent_ is null.
+        // The document is owned by the processor and already seeded from the ValueTree.
         tokeniser_ = std::make_unique<ChucKCodeTokeniser>();
-        scriptEditor = std::make_unique<OpenGlCodeEditor> (scriptDoc_, tokeniser_.get());
+        scriptEditor = std::make_unique<OpenGlCodeEditor> (proc_->getScriptDoc(), tokeniser_.get());
         addAndMakeVisible (scriptEditor.get());
         addOpenGlComponent (scriptEditor->getImageComponent());
 
         scriptEditor->setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 13.0f, juce::Font::plain));
+        scriptEditor->setDefaultFontSize (13.0f);
         scriptEditor->setColourScheme (tokeniser_->getDefaultColourScheme());
         scriptEditor->setColour (juce::CodeEditorComponent::backgroundColourId, juce::Colour (0xdd000000));
         scriptEditor->setColour (juce::CodeEditorComponent::highlightColourId, juce::Colours::darkgreen.withAlpha (0.5f));
         scriptEditor->setLineNumbersShown (true);
 
-        // Load saved script (or default) into the document before installing the listener,
-        // so the initial replaceAllContent does not trigger a spurious ValueTree write.
-        {
-            juce::String savedScript = prepVT_.getProperty (IDs::chuckScript, "");
-            if (savedScript.isEmpty())
-                savedScript = getDefaultScript();
-            scriptDoc_.replaceAllContent (savedScript);
-        }
-        scriptDoc_.addListener (this);
+        // Register as a listener only for error-highlight dismissal (the VT write
+        // is handled by ChucKlavierProcessor::ScriptDocListener).
+        proc_->getScriptDoc().addListener (this);
 
         // Status label — shows compile result or error under the editor.
         // Must be a PlainTextComponent (OpenGL-rendered) — plain juce::Label is
@@ -112,7 +109,7 @@ public:
         sendScriptButton->setTooltip ("Compile and hot-swap the script into the ChucK VM");
         sendScriptButton->setClickingTogglesState (false);
         addSynthButton (sendScriptButton.get(), true);
-        sendScriptButton->onClick = [this] { requestScriptSwap (scriptDoc_.getAllContent()); };
+        sendScriptButton->onClick = [this] { requestScriptSwap (proc_->getScriptDoc().getAllContent()); };
 
         consoleButton_ = std::make_unique<SynthButton> ("chuckConsole");
         consoleButton_->setText ("Console");
@@ -122,6 +119,15 @@ public:
         consoleButton_->onClick = [this] {
             if (auto* fi = findParentComponentOfClass<FullInterface>())
                 fi->toggleChuckConsole();
+        };
+
+        openInWindowButton_ = std::make_unique<SynthButton> ("chuckOpenWindow");
+        openInWindowButton_->setText ("Open in Window");
+        openInWindowButton_->setTooltip ("Open the script in a separate, persistent window");
+        openInWindowButton_->setClickingTogglesState (false);
+        addSynthButton (openInWindowButton_.get(), true);
+        openInWindowButton_->onClick = [this] {
+            if (proc_) proc_->openFloatingEditor();
         };
 
         muteButton_ = std::make_unique<SynthButton> ("mute");
@@ -194,33 +200,32 @@ public:
     std::unique_ptr<PeakMeterSection> inLevelMeter;
     std::unique_ptr<PeakMeterSection> externalLevelMeter;
 
-    juce::CodeDocument                    scriptDoc_;
     std::unique_ptr<ChucKCodeTokeniser>   tokeniser_;
     std::unique_ptr<OpenGlCodeEditor>     scriptEditor;
     std::shared_ptr<PlainTextComponent>   statusLabel;
     std::unique_ptr<SynthButton>         sendScriptButton;
     std::unique_ptr<SynthButton>         consoleButton_;
+    std::unique_ptr<SynthButton>         openInWindowButton_;
     std::unique_ptr<SynthButton>      muteButton_;
     std::unique_ptr<SynthButton>      soloButton_;
 
     ~ChucKlavierParametersView() override
     {
-        scriptDoc_.removeListener (this);
+        if (proc_)
+            proc_->getScriptDoc().removeListener (this);
     }
 
 private:
-    // CodeDocument::Listener — write script content back to the ValueTree on every edit,
-    // and dismiss the error highlight colour so it doesn't linger while the user types.
+    // CodeDocument::Listener — dismiss the error highlight colour while the user types.
+    // The VT write on edit is now handled by ChucKlavierProcessor::ScriptDocListener.
     void codeDocumentTextInserted (const juce::String&, int) override
     {
-        prepVT_.setProperty (IDs::chuckScript, scriptDoc_.getAllContent(), nullptr);
         if (scriptEditor)
             scriptEditor->setColour (juce::CodeEditorComponent::highlightColourId,
                                      juce::Colours::darkgreen.withAlpha (0.5f));
     }
     void codeDocumentTextDeleted (int, int) override
     {
-        prepVT_.setProperty (IDs::chuckScript, scriptDoc_.getAllContent(), nullptr);
         if (scriptEditor)
             scriptEditor->setColour (juce::CodeEditorComponent::highlightColourId,
                                      juce::Colours::darkgreen.withAlpha (0.5f));
@@ -290,6 +295,8 @@ private:
         if (scriptEditor)
             scriptEditor->setColour (juce::CodeEditorComponent::highlightColourId,
                                      juce::Colours::darkgreen.withAlpha (0.5f));
+        if (proc_ && proc_->floatingEditor_)
+            proc_->floatingEditor_->clearErrorHighlight();
         rebuildKnobPanel();
     }
 
@@ -324,17 +331,20 @@ private:
                                      juce::Colours::red.withAlpha (0.4f));
             highlightErrorLine (parseErrorLine (msg));
         }
+        if (proc_ && proc_->floatingEditor_)
+            proc_->floatingEditor_->applyErrorHighlight (parseErrorLine (msg));
     }
 
     // Highlight the given 1-based line in the editor and scroll it into view.
     void highlightErrorLine (int line1Based)
     {
-        if (scriptEditor == nullptr) return;
-        if (line1Based < 1 || line1Based > scriptDoc_.getNumLines()) return;
-        juce::CodeDocument::Position lineStart (scriptDoc_, line1Based - 1, 0);
-        int col = scriptDoc_.getLine (line1Based - 1).trimEnd().length();
+        if (scriptEditor == nullptr || proc_ == nullptr) return;
+        auto& doc = proc_->getScriptDoc();
+        if (line1Based < 1 || line1Based > doc.getNumLines()) return;
+        juce::CodeDocument::Position lineStart (doc, line1Based - 1, 0);
+        int col = doc.getLine (line1Based - 1).trimEnd().length();
         if (col == 0) col = 1;
-        juce::CodeDocument::Position lineEnd (scriptDoc_, line1Based - 1, col);
+        juce::CodeDocument::Position lineEnd (doc, line1Based - 1, col);
         scriptEditor->setHighlightedRegion (juce::Range<int> (lineStart.getPosition(), lineEnd.getPosition()));
         scriptEditor->scrollToLine (line1Based - 1);
         // setHighlightedRegion queues an async line-token rebuild via rebuildLineTokensAsync().

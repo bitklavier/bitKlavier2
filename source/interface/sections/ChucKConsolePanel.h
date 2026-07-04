@@ -55,6 +55,7 @@ public:
         logEditor_->setReadOnly (true);
         logEditor_->setLineNumbersShown (false);
         logEditor_->setFont (juce::Font (juce::Font::getDefaultMonospacedFontName(), 11.0f, juce::Font::plain));
+        logEditor_->setDefaultFontSize (11.0f);
         logEditor_->setColour (juce::CodeEditorComponent::backgroundColourId, juce::Colour (0xff111111));
         logEditor_->setColour (juce::CodeEditorComponent::defaultTextColourId, juce::Colour (0xffdddddd));
 

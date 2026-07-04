@@ -5,6 +5,9 @@
 #include "synth_base.h"
 #include "TempoProcessor.h"
 
+// juce_gui_extra required for juce::CodeDocument (owned by this processor).
+#include <juce_gui_extra/juce_gui_extra.h>
+
 // VERSION is defined as a preprocessor macro by the JUCE build system ("5.1.0").
 // chuck.h has a member `static std::string VERSION` which the macro corrupts.
 // Undef before including to avoid the collision.
@@ -12,9 +15,27 @@
 #include "chuck.h"
 #include "chuck_errmsg.h"
 #include "chuck_globals.h"
+#include "ChucKlavierFloatingEditor.h"
 
 // Thread-local pointer set before vm_->run() so the static callback can dispatch to the right instance.
 thread_local ChucKlavierProcessor* ChucKlavierProcessor::g_currentProcessor = nullptr;
+
+// Writes scriptDoc_ content back to the preparation ValueTree on every edit.
+struct ChucKlavierProcessor::ScriptDocListener : juce::CodeDocument::Listener
+{
+    explicit ScriptDocListener (ChucKlavierProcessor& owner) : owner_ (owner) {}
+
+    void codeDocumentTextInserted (const juce::String&, int) override
+    {
+        owner_.v.setProperty (IDs::chuckScript, owner_.scriptDoc_->getAllContent(), nullptr);
+    }
+    void codeDocumentTextDeleted (int, int) override
+    {
+        owner_.v.setProperty (IDs::chuckScript, owner_.scriptDoc_->getAllContent(), nullptr);
+    }
+
+    ChucKlavierProcessor& owner_;
+};
 
 // ---------------------------------------------------------------------------
 // Process-global ChucK stderr FIFO (RT-safe, no heap allocation on AT)
@@ -185,12 +206,41 @@ ChucKlavierProcessor::ChucKlavierProcessor (SynthBase& parent, const juce::Value
     const juce::String shortened = uuid.substring (0, 8);
     std::strncpy (displayName_, shortened.toRawUTF8(), sizeof (displayName_) - 1);
 
+    // Seed the shared script document from the ValueTree (or the default script).
+    // The listener is installed AFTER replaceAllContent so the seed doesn't trigger
+    // a spurious write back to the VT.
+    scriptDoc_ = std::make_unique<juce::CodeDocument>();
+    juce::String savedScript = vt.getProperty (IDs::chuckScript, "");
+    if (savedScript.isEmpty())
+        savedScript = juce::String (kDefaultScript);
+    scriptDoc_->replaceAllContent (savedScript);
+    scriptListener_ = std::make_unique<ScriptDocListener> (*this);
+    scriptDoc_->addListener (scriptListener_.get());
+
     // Restore slot bindings from an existing <chuckKnobs> child (gallery load path).
     loadSlotBindingsFromVT();
 }
 
-// Destructor defined here so std::unique_ptr<ChucK> sees the complete ChucK type.
-ChucKlavierProcessor::~ChucKlavierProcessor() = default;
+// Destructor defined here so std::unique_ptr<ChucK> and std::unique_ptr<ScriptDocListener>
+// see the complete types (both are forward-declared in the header).
+ChucKlavierProcessor::~ChucKlavierProcessor()
+{
+    if (scriptDoc_ && scriptListener_)
+        scriptDoc_->removeListener (scriptListener_.get());
+    delete floatingEditor_;   // dtor sets floatingEditor_=nullptr; safe if already null
+}
+
+void ChucKlavierProcessor::openFloatingEditor()
+{
+    jassert (juce::MessageManager::getInstance()->isThisTheMessageThread());
+    if (floatingEditor_ == nullptr)
+        floatingEditor_ = new ChucKlavierFloatingEditor (*this);
+    else
+    {
+        floatingEditor_->setVisible (true);
+        floatingEditor_->toFront (false);
+    }
+}
 
 void ChucKlavierProcessor::setTuning (TuningProcessor* tun)
 {

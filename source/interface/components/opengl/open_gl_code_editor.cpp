@@ -6,6 +6,29 @@
 
 #include <vector>
 
+// ─── static member definitions ───────────────────────────────────────────────
+
+std::atomic<float> OpenGlCodeEditor::s_globalFontSize_ { 0.0f };
+juce::Array<OpenGlCodeEditor*, juce::CriticalSection> OpenGlCodeEditor::s_liveEditors_;
+
+void OpenGlCodeEditor::setFontSize (float newSize)
+{
+    newSize = juce::jlimit (8.0f, 72.0f, newSize);
+    setFont (getFont().withHeight (newSize));
+    s_globalFontSize_.store (newSize);
+    broadcastFontSize (newSize);
+}
+
+void OpenGlCodeEditor::broadcastFontSize (float newSize)
+{
+    // Must be called on the message thread. Iterate a snapshot to avoid
+    // re-entrancy if setFont somehow triggers a structural change.
+    auto snapshot = s_liveEditors_;
+    for (auto* ed : snapshot)
+        if (ed->getFontSize() != newSize)
+            ed->setFont (ed->getFont().withHeight (newSize));
+}
+
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 static juce::String leadingWhitespace (const juce::String& line)
@@ -91,6 +114,17 @@ void OpenGlCodeEditor::insertTextAtCaret (const juce::String& textToInsert)
 
 bool OpenGlCodeEditor::keyPressed (const juce::KeyPress& key)
 {
+    // Zoom shortcuts — Cmd+= zoom in, Cmd+- zoom out, Cmd+0 reset.
+    // These work in both editable and read-only modes (e.g. the console).
+    if (key.getModifiers().isCommandDown() && ! key.getModifiers().isAltDown()
+        && ! key.getModifiers().isShiftDown())
+    {
+        const int ch = key.getKeyCode();
+        if (ch == '=' || ch == '+')  { setFontSize (getFontSize() + 1.0f); return true; }
+        if (ch == '-')               { setFontSize (getFontSize() - 1.0f); return true; }
+        if (ch == '0')               { setFontSize (defaultFontSize_);     return true; }
+    }
+
     if (! isReadOnly() && key == juce::KeyPress::backspaceKey && trySmartBackspace())
         return true;
 

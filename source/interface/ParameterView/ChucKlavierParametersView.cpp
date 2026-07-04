@@ -117,16 +117,24 @@ void ChucKlavierParametersView::resized()
     if (knobPanel_ != nullptr)
         knobPanel_->setBounds (bounds.removeFromRight (bounds.getWidth() / 4));
 
-    // Button row: Send (left ~2/3) + Console (right ~1/3), bottom flush with meter.
+    // Button row: [Send to VM] [Console] [Open in Window], bottom flush with meter.
     const int meterBottom = levelMeter->getBottom();
     {
-        constexpr int kConsoleW = 70;
+        constexpr int kConsoleW = 64;
+        constexpr int kWindowW  = 112;
         constexpr int kBtnGap   = 4;
-        const int sendW = bounds.getWidth() - kConsoleW - kBtnGap;
-        const int btnY  = meterBottom - buttonHeight;
+        const int rightW = kConsoleW + kBtnGap + kWindowW;
+        const int sendW  = bounds.getWidth() - rightW - kBtnGap;
+        const int btnY   = meterBottom - buttonHeight;
         sendScriptButton->setBounds (bounds.getX(), btnY, sendW, buttonHeight);
+        int x = bounds.getX() + sendW + kBtnGap;
         if (consoleButton_ != nullptr)
-            consoleButton_->setBounds (bounds.getX() + sendW + kBtnGap, btnY, kConsoleW, buttonHeight);
+        {
+            consoleButton_->setBounds (x, btnY, kConsoleW, buttonHeight);
+            x += kConsoleW + kBtnGap;
+        }
+        if (openInWindowButton_ != nullptr)
+            openInWindowButton_->setBounds (x, btnY, kWindowW, buttonHeight);
     }
 
     const int statusTop = meterBottom - buttonHeight - smallPadding - statusHeight;

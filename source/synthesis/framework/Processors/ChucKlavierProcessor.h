@@ -20,6 +20,13 @@
 // chuck.h. Keeping chuck.h in .cpp files only prevents this from spreading.
 class ChucK;
 
+// Forward-declare juce::CodeDocument to avoid pulling juce_gui_extra into audio-side TUs.
+namespace juce { class CodeDocument; }
+
+// Forward-declare the floating editor so the processor can own/create it
+// without pulling GUI headers into audio-side TUs.
+class ChucKlavierFloatingEditor;
+
 struct ChucKlavierParams : chowdsp::ParamHolder
 {
     // Maximum number of simultaneously exposed ChucK globals (matches VSTModulationBridge).
@@ -207,6 +214,14 @@ public:
     // Last error/status message from compile; written on MT, read on MT.
     juce::String lastCompileMessage;
 
+    // Shared script document — owns the in-memory script text.
+    // Seeded from IDs::chuckScript on construction; listener writes back on every edit.
+    // Outlives the popup view so floating editors and the popup editor can share it.
+    juce::CodeDocument& getScriptDoc() noexcept { return *scriptDoc_; }
+    std::unique_ptr<juce::CodeDocument> scriptDoc_;
+    struct ScriptDocListener;
+    std::unique_ptr<ScriptDocListener> scriptListener_;
+
     // MIDI-out callback: set before vm_->run(), cleared after. Thread-local so
     // multiple concurrent ChucKlavier instances on the same audio thread are safe.
     static thread_local ChucKlavierProcessor* g_currentProcessor;
@@ -226,6 +241,12 @@ public:
 
     void setTuning (TuningProcessor* tun) override;
     void tuningStateInvalidated() override;
+
+    // Floating script editor window (one per prep, heap-allocated, null when closed).
+    // Created/shown by openFloatingEditor(); deleted in ~ChucKlavierProcessor() or
+    // via ChucKlavierFloatingEditor::closeAll() from FullInterface teardown.
+    ChucKlavierFloatingEditor* floatingEditor_ = nullptr;
+    void openFloatingEditor();
 
 public:
     static constexpr const char* kDefaultScript =
