@@ -1667,7 +1667,7 @@ Select the "add/copy/paste/align" button at the top of the bitKlavier screen und
 
 #### Code Editor
 
-The large text area on the left is a full-featured ChucK code editor with syntax highlighting. Write your ChucK script here. The editor saves your script continuously into the gallery file as you type, so your code is never lost on close.
+The large text area on the left is a full-featured ChucK code editor with syntax highlighting. Write your ChucK script here. The editor saves your script continuously into the gallery file as you type, so your code is never lost on close. Click **Open in Window** to work with a larger, floating window for easier editing. Press command + or command - to change the size of the font.
 
 #### Status Label
 
