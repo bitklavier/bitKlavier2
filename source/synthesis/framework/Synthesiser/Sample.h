@@ -1326,6 +1326,9 @@ private:
             std::tie (currentSamplePos, currentDirection) = getNextState (currentIncrement, currentSampleStart, currentSampleEnd);
             outL[writePos] += (Element) 0;
             if (outR) outR[writePos] += (Element) 0;
+
+            currentSustainTime_samples++;
+
             return true;
         }
 
