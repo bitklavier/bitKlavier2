@@ -415,6 +415,8 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper &open_gl, bool animate) 
         while (juce::gl::glGetError() != juce::gl::GL_NO_ERROR) {}
         const juce::String bgType = juce::String(typeid(*background_).name());
 #endif
+        if (background_->shader() == nullptr)
+            background_->init(open_gl);
         background_->render(open_gl);
 #if JUCE_DEBUG
         GLenum glb = juce::gl::glGetError();

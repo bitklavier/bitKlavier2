@@ -13,6 +13,7 @@
 #include "Preparations/KeymapPreparation.h"
 #include "Preparations/ResonancePreparation.h"
 #include "Preparations/BlendronicPreparation.h"
+#include "Preparations/ChucKlavierPreparation.h"
 #include "Preparations/TempoPreparation.h"
 #include "Preparations/ResetPreparation.h"
 #include "Preparations/TuningPreparation.h"

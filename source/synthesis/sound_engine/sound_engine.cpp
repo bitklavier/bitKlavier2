@@ -131,6 +131,8 @@ namespace bitklavier {
                 a->allNotesOff();
             else if (auto* a = dynamic_cast<ResonanceProcessor*>(p))
                 a->allNotesOff();
+            else if (auto* a = dynamic_cast<ChucKlavierProcessor*>(p))
+                a->allNotesOff();
         }
     }
 

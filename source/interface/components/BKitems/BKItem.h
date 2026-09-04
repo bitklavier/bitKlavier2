@@ -11,6 +11,7 @@
 #include "open_gl_image_component.h"
 #include "common.h"
 #include "Paths.h"
+#include "BinaryData.h"
 
 class BKItem : /*public DraggableComponent,*/ public juce::Button {
 public:
@@ -107,7 +108,8 @@ public:
                type_ == bitklavier::BKPreparationType::PreparationTypeCompressor ||
                type_ == bitklavier::BKPreparationType::PreparationTypeEQ ||
                type_ == bitklavier::BKPreparationType::PreparationTypeReverb ||
-               type_ == bitklavier::BKPreparationType::PreparationTypeVST;
+               type_ == bitklavier::BKPreparationType::PreparationTypeVST ||
+               type_ == bitklavier::BKPreparationType::PreparationTypeChucKlavier;
     }
 
     // Returns the visual bounds used for port placement. If the item draws its icon
@@ -1306,6 +1308,42 @@ public:
         g.setColour(selected_ ? juce::Colours::white : prep_color_);
         g.strokePath(layer_1_, juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered));
     }
+};
+
+class ChucKlavierItem : public BKItem
+{
+public:
+    ChucKlavierItem() : BKItem (bitklavier::BKPreparationType::PreparationTypeChucKlavier)
+    {
+        logo_ = juce::ImageCache::getFromMemory (BinaryData::chucklogo2023w_png,
+                                                  BinaryData::chucklogo2023w_pngSize);
+    }
+
+    void paintButton (juce::Graphics& g, bool /*highlighted*/, bool /*down*/) override
+    {
+        auto bounds = getLocalBounds().toFloat();
+
+        g.setColour (findColour (Skin::kShadow, true));
+        g.drawImageAt (shadow_, 0, 0, true);
+
+        // Dark fill
+        g.setColour (juce::Colours::black);
+        g.fillPath (layer_1_);
+
+        // Draw logo centred inside the border (reduced by kMeterPixel margin)
+        if (logo_.isValid())
+        {
+            auto inner = bounds.reduced (kMeterPixel * 2.0f);
+            g.drawImage (logo_, inner,
+                         juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
+        }
+
+        g.setColour (selected_ ? juce::Colours::white : prep_color_);
+        g.strokePath (layer_1_, juce::PathStrokeType (kMeterPixel, juce::PathStrokeType::mitered));
+    }
+
+private:
+    juce::Image logo_;
 };
 
 #endif //BITKLAVIER2_BKITEM_H

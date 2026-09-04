@@ -145,6 +145,11 @@ namespace IDs
     DECLARE_ID(vst)
     DECLARE_ID(vstbridge)
     DECLARE_ID(bridgeUuid)
+    DECLARE_ID(chucklavier)
+    DECLARE_ID(chuckScript)
+    DECLARE_ID(chuckKnobs)
+    DECLARE_ID(chuckKnob)
+    DECLARE_ID(chuckGlobalName)
     DECLARE_ID(keymap)
     DECLARE_ID(keymapBits)
     DECLARE_ID(noConnection)
@@ -167,7 +172,7 @@ namespace IDs
 }
 
 // order should match BKPreparationType in common.h
-static const std::array<juce::Identifier, 18> preparationIDs {
+static const std::array<juce::Identifier, 19> preparationIDs {
     IDs::keymap,
     IDs::direct,
     IDs::synchronic,
@@ -185,7 +190,8 @@ static const std::array<juce::Identifier, 18> preparationIDs {
     IDs::compressor,
     IDs::eq,
     IDs::vst,
-    IDs::reverb
+    IDs::reverb,
+    IDs::chucklavier
 };
 
 #undef DECLARE_ID

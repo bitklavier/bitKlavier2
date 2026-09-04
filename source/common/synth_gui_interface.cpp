@@ -683,12 +683,13 @@ PopupItems SynthGuiInterface::getPreparationPopupItems()
         if (type <= bitklavier::BKPreparationType::PreparationTypeComment ||
             type == bitklavier::BKPreparationType::PreparationTypeCompressor ||
             type == bitklavier::BKPreparationType::PreparationTypeEQ ||
-            type == bitklavier::BKPreparationType::PreparationTypeReverb)
-            popup.addItem(type, name);
+            type == bitklavier::BKPreparationType::PreparationTypeReverb ||
+            type == bitklavier::BKPreparationType::PreparationTypeChucKlavier)
+            popup.addItem(type, type == bitklavier::BKPreparationType::PreparationTypeChucKlavier ? name + " (=)" : name);
         if (type == bitklavier::BKPreparationType::PreparationTypeResonance ||
             type == bitklavier::BKPreparationType::PreparationTypeTempo ||
             type == bitklavier::BKPreparationType::PreparationTypeMidiTarget ||
-            type == bitklavier::BKPreparationType::PreparationTypeComment ||
+            type == bitklavier::BKPreparationType::PreparationTypeChucKlavier ||
             type == bitklavier::BKPreparationType::PreparationTypeReverb)
             popup.addItem(separator);
     }

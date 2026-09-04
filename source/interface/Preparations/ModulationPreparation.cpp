@@ -16,6 +16,8 @@
 #include "synth_base.h"
 #include "VSTParametersView.h"
 #include "VSTModulationBridge.h"
+#include "ChucKlavierParametersView.h"
+#include "ChucKlavierProcessor.h"
 // Definition for the ModulationPreparation constructor.  It takes three parameters: a pointer to
 // a Modulation Processor p, a juce::ValueTree v, and a reference to an OpenGlWrapper object.  Initializes
 // the base class members and private ModulationPreparation member proc with an initialization list.
@@ -85,6 +87,33 @@ void ModulationPreparation::mouseDoubleClick (const juce::MouseEvent&)
                         destPrepVt.getProperty (IDs::nodeID));
                     if (prepNodeID != destID) continue;
 
+                    // --- ChucKlavier branch ---
+                    if (destPrepVt.hasType (IDs::chucklavier))
+                    {
+                        auto* chuckNode = interface->getSynth()->getNodeForId (destID);
+                        if (chuckNode != nullptr)
+                        {
+                            if (auto* chuckProc = dynamic_cast<ChucKlavierProcessor*> (chuckNode->getProcessor()))
+                            {
+                                auto* synthBase = interface->getSynth();
+                                auto popup = std::make_unique<ChucKlavierParametersView> (
+                                    chuckProc->getState(),
+                                    chuckProc->getState().params,
+                                    destPrepVt.getProperty (IDs::uuid).toString(),
+                                    destPrepVt,
+                                    &interface->getGui()->open_gl_,
+                                    synthBase,
+                                    destID,
+                                    chuckProc);
+                                showPrepPopup (std::move (popup), destPrepVt,
+                                               bitklavier::BKPreparationTypeNil);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+
+                    // --- VST branch ---
                     auto bridgeVt = destPrepVt.getChildWithName (IDs::vstbridge);
                     if (! bridgeVt.isValid()) break;
 

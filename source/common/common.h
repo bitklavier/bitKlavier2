@@ -110,6 +110,7 @@ namespace bitklavier {
         PreparationTypeEQ,
         PreparationTypeVST,
         PreparationTypeReverb,
+        PreparationTypeChucKlavier,
         BKPreparationTypeNil,
     } BKPreparationType;
 
@@ -133,10 +134,11 @@ namespace bitklavier {
         {PreparationTypeReset,      "Reset"},
         {PreparationTypePianoMap,   "Piano Switch"},
         {PreparationTypeComment,    "Comment"},
+        {PreparationTypeChucKlavier, "ChucKlavier"},
         {PreparationTypeCompressor, "Compressor"},
         {PreparationTypeEQ,         "EQ"},
-        {PreparationTypeVST,        "VST"},
-        {PreparationTypeReverb,     "Reverb"}
+        {PreparationTypeVST,          "VST"},
+        {PreparationTypeReverb,       "Reverb"},
     };
 
 } // namespace bitKlavier

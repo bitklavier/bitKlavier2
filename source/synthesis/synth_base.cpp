@@ -50,6 +50,7 @@
 #include "EQProcessor.h"
 #include "CompressorProcessor.h"
 #include "ReverbProcessor.h"
+#include "ChucKlavierProcessor.h"
 #include "MTSESPMasterCoordinator.h"
 
 // For saving last opened gallery path
@@ -118,6 +119,7 @@ SynthBase::SynthBase (juce::AudioDeviceManager* deviceManager) :
     prepFactory.template registerType<CompressorProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::compressor.toString().toStdString());
     prepFactory.template registerType<EQProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::eq.toString().toStdString());
     prepFactory.template registerType<ReverbProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::reverb.toString().toStdString());
+    prepFactory.template registerType<ChucKlavierProcessor,  SynthBase&, const juce::ValueTree&,juce::UndoManager*&>(IDs::chucklavier.toString().toStdString());
 
     mod_connections_.reserve (bitklavier::kMaxModulationConnections);
     state_connections_.reserve (bitklavier::kMaxStateConnections);
@@ -798,7 +800,11 @@ static void collectSoundsetRefsRecursive (const juce::ValueTree& node,
 bool SynthBase::loadGalleryFromValueTree (const juce::ValueTree& state)
 {
     if (auto* gui = getGuiInterface())
+    {
         gui->removeAllGuiListeners();
+        if (auto* fi = gui->getGui())
+            fi->clearPreparationPopups();
+    }
 
     pauseProcessing (true);
     clearAllBackend();
@@ -886,7 +892,11 @@ bool SynthBase::loadFromFile ( juce::File preset, std::string& error)
     // engine_->resetEngine();
 
     if (auto* gui = getGuiInterface())
+    {
         gui->removeAllGuiListeners(); // 1) detach GUI from backend FIRST
+        if (auto* fi = gui->getGui())
+            fi->clearPreparationPopups();
+    }
 
     pauseProcessing(true);
     clearAllBackend();               // 2) now it’s safe to destroy lists

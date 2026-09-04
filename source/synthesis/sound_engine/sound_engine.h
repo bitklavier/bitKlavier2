@@ -31,6 +31,7 @@
 #include "ResonanceProcessor.h"
 #include "SynchronicProcessor.h"
 #include "TuningProcessor.h"
+#include "ChucKlavierProcessor.h"
 #include "midi_manager.h"
 #include "synth_base.h"
 #include "KeymapProcessor.h"

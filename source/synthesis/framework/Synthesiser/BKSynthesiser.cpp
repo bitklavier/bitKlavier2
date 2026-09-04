@@ -86,6 +86,19 @@ void BKSynthesiser::addSoundSet (juce::ReferenceCountedArray<BKSynthesiserSound>
     voices.clearQuick (true);
     graveyardVoices.clearQuick (true);
 
+    // playingVoicesByNote holds raw pointers into the voices/graveyardVoices arrays
+    // just deleted above. If any notes were still held (or held on other channels)
+    // when the sound set was switched, those pointers are now dangling and would
+    // be dereferenced on the next noteOff, calling into a freed voice's vtable.
+    // Clear them out along with the active-note tracking so noteOff() has nothing
+    // stale to act on.
+    for (auto& perChannel : playingVoicesByNote)
+        for (auto& perNote : perChannel)
+            perNote.clearQuick();
+
+    activeNotes.reset();
+    someVoicesActive = false;
+
     if (s->getFirst() != nullptr)
     {
         const bool isSFZ = (s->getFirst()->getSoundSampleType() == SoundSampleType::SFZ);

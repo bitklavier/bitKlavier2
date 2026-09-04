@@ -8,6 +8,7 @@
 
 #include "ConstructionSite.h"
 #include "Preparations.h"
+#include "ChucKlavierPreparation.h"
 #include "CommentPreparation.h"
 #include "EQPreparation.h"
 #include "CompressorPreparation.h"
@@ -42,7 +43,8 @@ static constexpr std::array<std::pair<float, float>,
     /* 14 Compressor */ { 245.0f, 125.0f },
     /* 15 EQ         */ { 245.0f, 125.0f },
     /* 16 VST        */ { 245.0f, 125.0f },
-    /* 17 Reverb     */ { 245.0f, 125.0f },
+    /* 17 Reverb       */ { 245.0f, 125.0f },
+    /* 18 ChucKlavier  */ { 167.0f, 133.0f },
 }};
 
 ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &um, OpenGlWrapper &open_gl,
@@ -94,6 +96,7 @@ ConstructionSite::ConstructionSite(const juce::ValueTree &v, juce::UndoManager &
     nodeFactory.Register(IDs::eq, EQPreparation::create);
     nodeFactory.Register(IDs::compressor, CompressorPreparation::create);
     nodeFactory.Register(IDs::reverb, ReverbPreparation::create);
+    nodeFactory.Register(IDs::chucklavier, ChucKlavierPreparation::create);
 
     lassoVisual = std::make_shared<OpenGlImageComponent>("lassoVisual");
     lassoVisual->setComponent(&selectorLasso);
@@ -152,7 +155,8 @@ enum CommandIDs {
     comment = 0x0630,
     eq = 0x0631,
     compressor = 0x0632,
-    reverb = 0x0633
+    reverb = 0x0633,
+    chucklavier = 0x0634
 };
 
 void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
@@ -183,7 +187,8 @@ void ConstructionSite::getAllCommands(juce::Array<juce::CommandID> &commands) {
         comment,
         eq,
         compressor,
-        reverb});
+        reverb,
+        chucklavier});
 }
 
 void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationCommandInfo &info)
@@ -261,6 +266,10 @@ void ConstructionSite::getCommandInfo(juce::CommandID id, juce::ApplicationComma
         case reverb:
             info.setInfo("Reverb", "Create Reverb Preparation", "Edit", 0);
             info.addDefaultKeypress('r', juce::ModifierKeys::shiftModifier);
+            break;
+        case chucklavier:
+            info.setInfo("ChucKlavier", "Create ChucKlavier Preparation", "Edit", 0);
+            info.addDefaultKeypress('=', juce::ModifierKeys::noModifiers);
             break;
         case horizontallyAlignSelected:
             info.setInfo("Horizontally Align Selected", "Aligns Selected Preparations Horizontally", "Edit", 0);
@@ -518,6 +527,21 @@ bool ConstructionSite::perform(const InvocationInfo &info) {
             {
                 juce::ValueTree t(IDs::reverb);
                 t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeReverb, nullptr);
+                t.setProperty(IDs::width, prepWidth, nullptr);
+                t.setProperty(IDs::height, prepHeight, nullptr);
+                t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(
+                    juce::Point<int>(lastX + scroll_offset_.x, lastY + scroll_offset_.y)), nullptr);
+                prep_list->appendChild(t, &undo);
+                return true;
+            }
+            case chucklavier:
+            {
+                prepWidth  = 167.0f;
+                prepHeight = 133.0f;
+                prepWidth  *= prepScale;
+                prepHeight *= prepScale;
+                juce::ValueTree t(IDs::chucklavier);
+                t.setProperty(IDs::type, bitklavier::BKPreparationType::PreparationTypeChucKlavier, nullptr);
                 t.setProperty(IDs::width, prepWidth, nullptr);
                 t.setProperty(IDs::height, prepHeight, nullptr);
                 t.setProperty(IDs::x_y, juce::VariantConverter<juce::Point<int>>::toVar(

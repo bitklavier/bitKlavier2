@@ -27,6 +27,9 @@
 #include "synth_base.h"
 #include "synth_slider.h"
 #include "loading_section.h"
+#include "ChucKConsolePanel.h"
+#include "ChucKlavierProcessor.h"
+#include "ChucKlavierFloatingEditor.h"
 
 FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommandManager& _manager, SynthGuiInterface* _interface)
     : SynthSection ("full_interface"), width_ (0), resized_width_ (0), last_render_scale_ (0.0f), display_scale_ (1.0f), pixel_multiple_ (1), unsupported_ (false), animate_ (true), enable_redo_background_ (true), open_gl_ (open_gl_context_),
@@ -132,6 +135,9 @@ FullInterface::FullInterface (SynthGuiData* synth_data, juce::ApplicationCommand
 
 FullInterface::~FullInterface()
 {
+    // Close all floating script editors before GL context detaches and component
+    // hierarchy tears down. Must run on the message thread (called from plugin editor dtor).
+    ChucKlavierFloatingEditor::closeAll();
     if (synthInterface_)
         synthInterface_->getSynth()->user_prefs->tree.removeListener (this);
     open_gl_context_.detach();
@@ -292,6 +298,12 @@ void FullInterface::resized()
     mod_popup->setBounds (bounds.getRight() - 200 - voice_padding, header_->getBottom() + voice_padding, 200, new_bounds.getHeight() / (1.12 * display_scale_));
     about_section_->setBounds (new_bounds);
     loading_section->setBounds (new_bounds);
+
+    if (chuck_console_ != nullptr && !chuck_console_->hasBeenPositioned_)
+    {
+        constexpr int kW = 350, kH = 220;
+        chuck_console_->setBounds (getWidth() - kW - 8, getHeight() - kH - 8, kW, kH);
+    }
     if (getWidth() && getHeight())
         redoBackground();
 }
@@ -313,6 +325,65 @@ void FullInterface::showLoadingSection()
 void FullInterface::hideLoadingSection() {
     juce::ScopedLock lock (open_gl_critical_section_);
     loading_section->setVisible (false);
+}
+
+void FullInterface::timerCallback()
+{
+    open_gl_context_.triggerRepaint();
+
+    // Drain ChucK stderr FIFO on the message thread.
+    char lineBuf[320];
+    int drained = 0;
+    while (drained < 128 && ChucKlavierProcessor::popChuckLogLine (lineBuf, sizeof (lineBuf)))
+    {
+        juce::String line = juce::String::fromUTF8 (lineBuf);
+        chuckBacklog_.push_back (line);
+        if ((int) chuckBacklog_.size() > kChuckBacklogSize)
+            chuckBacklog_.pop_front();
+        if (chuck_console_ != nullptr && chuck_console_->isVisible())
+            chuck_console_->append (line);
+        ++drained;
+    }
+}
+
+void FullInterface::showChuckConsole()
+{
+    if (chuck_console_ == nullptr)
+    {
+        chuck_console_ = std::make_unique<ChucKConsolePanel> (open_gl_);
+        addSubSection (chuck_console_.get());
+        chuck_console_->setAlwaysOnTop (true);
+        chuck_console_->setWantsKeyboardFocus (true);
+
+        // Default position: bottom-right, 350×220.
+        const int w = 350, h = 220;
+        chuck_console_->setBounds (getWidth() - w - 8, getHeight() - h - 8, w, h);
+        chuck_console_->hasBeenPositioned_ = false; // allow first-layout override
+    }
+
+    if (!chuck_console_->isVisible())
+    {
+        chuck_console_->clear();
+        chuck_console_->dumpBacklog (chuckBacklog_);
+        chuck_console_->setVisible (true);
+    }
+}
+
+void FullInterface::toggleChuckConsole()
+{
+    if (chuck_console_ == nullptr || !chuck_console_->isVisible())
+        showChuckConsole();
+    else
+        chuck_console_->setVisible (false);
+}
+
+void FullInterface::appendChuckLogMT (const juce::String& line)
+{
+    chuckBacklog_.push_back (line);
+    if ((int) chuckBacklog_.size() > kChuckBacklogSize)
+        chuckBacklog_.pop_front();
+    if (chuck_console_ != nullptr && chuck_console_->isVisible())
+        chuck_console_->append (line);
 }
 
 void FullInterface::animate (bool animate)
@@ -347,6 +418,12 @@ void FullInterface::reset()
 void FullInterface::removeAllGuiListeners() {
     if (main_)
         main_->removeAllGuiListeners();
+}
+
+void FullInterface::clearPreparationPopups()
+{
+    if (prep_popup) prep_popup->clearContent();
+    if (mod_popup)  mod_popup->clearContent();
 }
 
 void FullInterface::popupDisplay (juce::Component* source, const std::string& text, juce::BubbleComponent::BubblePlacement placement, bool primary)
@@ -506,15 +583,17 @@ void FullInterface::openGLContextClosing()
         return;
     DBG ("closing");
     background_.destroy (open_gl_);
-    if (prep_popup) prep_popup->destroyOpenGlComponents (open_gl_);
-    if (mod_popup) mod_popup->destroyOpenGlComponents (open_gl_);
+    if (prep_popup)   prep_popup->destroyOpenGlComponents (open_gl_);
+    if (mod_popup)    mod_popup->destroyOpenGlComponents (open_gl_);
+    if (chuck_console_) chuck_console_->destroyOpenGlComponents (open_gl_);
     destroyOpenGlComponents (open_gl_);
     if (loading_section) removeSubSection (loading_section.get());
-    if (main_)      { removeSubSection (main_.get());      main_      = nullptr; }
-    if (header_)    { removeSubSection (header_.get());    header_    = nullptr; }
-    if (footer_)    { removeSubSection (footer_.get());    footer_    = nullptr; }
-    if (prep_popup) { removeSubSection (prep_popup.get()); prep_popup = nullptr; }
-    if (mod_popup)  { removeSubSection (mod_popup.get());  mod_popup  = nullptr; }
+    if (main_)         { removeSubSection (main_.get());         main_         = nullptr; }
+    if (header_)       { removeSubSection (header_.get());       header_       = nullptr; }
+    if (footer_)       { removeSubSection (footer_.get());       footer_       = nullptr; }
+    if (prep_popup)    { removeSubSection (prep_popup.get());    prep_popup    = nullptr; }
+    if (mod_popup)     { removeSubSection (mod_popup.get());     mod_popup     = nullptr; }
+    if (chuck_console_){ removeSubSection (chuck_console_.get()); chuck_console_ = nullptr; }
 
     open_gl_.shaders = nullptr;
     shaders_ = nullptr;

@@ -1510,6 +1510,28 @@ void PreparationPopup::updateMTSDisplay() {
     mtsStatusText_->setText(status);
 }
 
+void PreparationPopup::clearContent()
+{
+    if (prep_view == nullptr)
+        return;
+
+    SynthGuiInterface* _parent = findParentComponentOfClass<SynthGuiInterface>();
+    if (_parent == nullptr)
+        return;
+
+    prep_view->destroyOpenGlComponents (*_parent->getOpenGlWrapper());
+    {
+        juce::ScopedLock lock (*_parent->getOpenGlCriticalSection());
+        if (auto* full = findParentComponentOfClass<FullInterface>())
+            if (full->modulation_manager)
+                full->modulation_manager->clearModulationSource();
+        removeSubSection (prep_view.get());
+        prep_view.reset (nullptr);
+    }
+    curr_vt = {};
+    setVisible (false);
+}
+
 void PreparationPopup::reset() {
     sampleSelector->setVisible(true);
     sampleSelectText->setVisible(true);
