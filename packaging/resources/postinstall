@@ -26,8 +26,8 @@ if [ -f "$RESOURCES_ZIP" ]; then
     mkdir -p /tmp/bitKlavier_temp
     unzip -o "$RESOURCES_ZIP" -d /tmp/bitKlavier_temp >> "$LOG_FILE" 2>&1
     
-    # The zip unzips into a folder called "bitKlavier"
-    SOURCE_DIR="/tmp/bitKlavier_temp/bitKlavier"
+    # Detect the top-level folder name from the zip (ignores __MACOSX)
+    SOURCE_DIR=$(find /tmp/bitKlavier_temp -mindepth 1 -maxdepth 1 -type d ! -name '__MACOSX' | head -1)
     
     if [ -d "$SOURCE_DIR" ]; then
         # Function to selectively copy files recursively
