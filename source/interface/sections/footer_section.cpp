@@ -5,6 +5,7 @@
 // Created by Myra Norton on 11/14/25.
 //
 
+#include <bitset>
 #include "footer_section.h"
 #include "GainProcessor.h"
 #include "sound_engine.h"

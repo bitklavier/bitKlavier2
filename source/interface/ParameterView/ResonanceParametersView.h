@@ -8,6 +8,7 @@
 #ifndef BITKLAVIER0_RESONANCEPARAMETERSVIEW_H
 #define BITKLAVIER0_RESONANCEPARAMETERSVIEW_H
 
+#include <bitset>
 #include "ResonanceProcessor.h"
 #include "peak_meter_section.h"
 #include "synth_section.h"

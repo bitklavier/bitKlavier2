@@ -4,6 +4,7 @@
 //
 // Created by Davis Polito on 6/3/25.
 //
+#include <bitset>
 #include "array_to_string.h"
 juce::String getOnKeyString(const std::bitset<128> &bits)
 {

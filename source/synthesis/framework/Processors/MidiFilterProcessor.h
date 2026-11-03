@@ -9,6 +9,7 @@
 #define BITKLAVIER0_MIDIFILTERPROCESSOR_H
 
 #pragma once
+#include <bitset>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <Identifiers.h>
 #include "synth_base.h"

@@ -9,6 +9,7 @@
 #ifndef BITKLAVIER0_MULTISLIDER2DSTATE_H
 #define BITKLAVIER0_MULTISLIDER2DSTATE_H
 
+#include <bitset>
 #include "array_to_string.h"
 #include "chowdsp_plugin_state/chowdsp_plugin_state.h"
 

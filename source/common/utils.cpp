@@ -17,6 +17,7 @@
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bitset>
 #include "utils.h"
 
 namespace bitklavier {

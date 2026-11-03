@@ -9,6 +9,7 @@
 #define BITKLAVIER0_OPENGL_KEYMAPKEYBOARD_H
 #pragma once
 
+#include <bitset>
 #include "../components/BKComponents/BKKeymapKeyboardComponent.h"
 #include "../../common/synth_gui_interface.h"
 #include "../../common/ObjectLists/PreparationList.h"

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <bitset>
 #include "EnvParams.h"
 #include "EnvelopeSequenceParams.h"
 #include "Identifiers.h"

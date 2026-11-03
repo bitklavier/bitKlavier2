@@ -18,6 +18,7 @@ Synchronic.h
 
 #pragma once
 
+#include <bitset>
 #include "IMuteSolable.h"
 #include <PreparationStateImpl.h>
 #include <chowdsp_plugin_base/chowdsp_plugin_base.h>

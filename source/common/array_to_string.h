@@ -8,6 +8,7 @@
 
 #ifndef ARRAY_TO_STRING_H
 #define ARRAY_TO_STRING_H
+#include <bitset>
 #include <array>
 #include <sstream>
 #include <string>

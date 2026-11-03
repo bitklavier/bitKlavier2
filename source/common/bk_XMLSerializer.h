@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #pragma once
+#include <bitset>
 #include <chowdsp_serialization/chowdsp_serialization.h>
 namespace bitklavier
 {

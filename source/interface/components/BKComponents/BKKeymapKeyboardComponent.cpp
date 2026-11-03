@@ -5,6 +5,7 @@
 // Created by Davis Polito on 5/27/25.
 //
 
+#include <bitset>
 #include "BKKeymapKeyboardComponent.h"
 #include "array_to_string.h"
 

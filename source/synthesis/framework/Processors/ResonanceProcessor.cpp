@@ -15,6 +15,7 @@
 ==============================================================================
 */
 
+#include <bitset>
 #include "ResonanceProcessor.h"
 #include "Synthesiser/Sample.h"
 #include "common.h"

@@ -8,6 +8,7 @@
 #ifndef BITKLAVIER2_KEYMAPPROCESSOR_H
 #define BITKLAVIER2_KEYMAPPROCESSOR_H
 
+#include <bitset>
 #include "json.hpp"
 #include "midi_manager.h"
 #include "PreparationStateImpl.h"

@@ -7,6 +7,7 @@
 
 #ifndef BITKLAVIER2_MODULATIONPROCESSOR_H
 #define BITKLAVIER2_MODULATIONPROCESSOR_H
+#include <bitset>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <Identifiers.h>
 #include "synth_base.h"

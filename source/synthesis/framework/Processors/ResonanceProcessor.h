@@ -34,6 +34,7 @@
 
 #pragma once
 
+#include <bitset>
 #include "IMuteSolable.h"
 #include "PluginBase.h"
 #include "Synthesiser/BKSynthesiser.h"

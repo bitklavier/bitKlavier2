@@ -284,7 +284,7 @@ static constexpr int MaxMidiNotes = 128;
       template<size_t N>
       struct VelocityRange
       {
-          static constexpr std::array<std::tuple<int, int>, N> values; // Declaration
+          static constexpr std::array<std::tuple<int, int>, N> values = {}; // (MSVC needs an initializer here; the real values are the specializations below)
       };
 
 // Initialize the primary template's static member (empty in this case)

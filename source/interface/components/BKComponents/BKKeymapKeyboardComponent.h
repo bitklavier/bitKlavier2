@@ -8,6 +8,7 @@
 #ifndef BKKEYMAPKEYBOARDCOMPONENT_H
 #define BKKEYMAPKEYBOARDCOMPONENT_H
 
+#include <bitset>
 #include "../StateModulatedComponent.h"
 #include "BKOnOffKeyboardComponent.h"
 #include "KeymapProcessor.h"

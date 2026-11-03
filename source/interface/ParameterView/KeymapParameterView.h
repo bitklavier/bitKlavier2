@@ -8,6 +8,7 @@
 #ifndef KEYMAPPARAMETERVIEW_H
 #define KEYMAPPARAMETERVIEW_H
 
+#include <bitset>
 #include "KeymapProcessor.h"
 #include "synth_section.h"
 #include "synth_slider.h"

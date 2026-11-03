@@ -7,6 +7,7 @@
 
 #ifndef BITKLAVIER2_BKBKSynthesiser_H
 #define BITKLAVIER2_BKBKSynthesiser_H
+#include <bitset>
 #include <juce_core/juce_core.h>
 #include "Sample.h"
 #include "EnvParams.h"

@@ -6,6 +6,7 @@
 //
 
 #pragma once
+#include <bitset>
 #include "CompressorProcessor.h"
 #include "EQProcessor.h"
 #include "ReverbProcessor.h"
