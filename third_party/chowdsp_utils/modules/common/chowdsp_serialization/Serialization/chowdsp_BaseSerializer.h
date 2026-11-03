@@ -134,6 +134,7 @@ public:
     deserialize(DeserialType<Serializer> serial, juce::String id,T& x)
     {
         x = Serializer::template deserializeArithmeticType<T>(serial, id);
+        return x;
     }
 
 

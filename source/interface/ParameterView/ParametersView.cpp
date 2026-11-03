@@ -361,5 +361,6 @@ namespace bitklavier {
     juce::Component* ParametersView::getComponentForParameter (const juce::RangedAudioParameter& param)
     {
 //        return pimpl->getComponentForParameter (param);
+        return nullptr;
     }
 }//naemspace bitlkavier

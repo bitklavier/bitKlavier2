@@ -39,7 +39,7 @@ class StateConnection;
         }
 
         void releaseResources() override {}
-        double getTailLengthSeconds() const override {}
+        double getTailLengthSeconds() const override { return 0.0; }
         void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
 
         juce::AudioProcessorEditor * createEditor() override { return  nullptr; }

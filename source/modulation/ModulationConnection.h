@@ -99,6 +99,7 @@ class ModulationProcessor;
         {
             defaultBipolar = val;
             setBipolar(val);
+            return val;
         }
 
         bool isDefaultBipolar() {
@@ -305,6 +306,7 @@ class ModulationProcessor;
 
         int setDestParamIndex(int index) {
             destParamIndex = index;
+            return index;
         }
 
        void updateScalingAudioThread(float knobValueParamUnits) noexcept {
@@ -347,6 +349,7 @@ class ModulationProcessor;
 
         float setCurrentTotalBaseValue(float basevalue) {
             currentTotalBaseValue = basevalue;
+            return basevalue;
         }
 
         void setCarryActive(float carry) {

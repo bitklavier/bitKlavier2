@@ -43,7 +43,7 @@ struct StateModulatedComponent : juce::Component
         hovering_ = false;
     }
 
-    virtual std::shared_ptr<OpenGlImageComponent> getImageComponent() {}
+    virtual std::shared_ptr<OpenGlImageComponent> getImageComponent() { return nullptr; }
     std::vector<Listener*> listeners_;
     bool hovering_ = false;
 

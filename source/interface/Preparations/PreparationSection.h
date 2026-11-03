@@ -195,7 +195,7 @@ public:
     }
 
     void setPortInfo();
-    virtual std::unique_ptr<SynthSection> getPrepPopup() {}
+    virtual std::unique_ptr<SynthSection> getPrepPopup() { return nullptr; }
 
     void setNodeInfo();
     void parentHierarchyChanged() override;

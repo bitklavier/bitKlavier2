@@ -171,6 +171,7 @@ juce::File LoadSave::getFavoritesFile() {
 //    #else
 //    return juce::File();
 //    #endif
+    return {}; // body was commented out; previously fell off the end (UB)
 }
 
 juce::File LoadSave::getDefaultSkin() {
@@ -259,6 +260,7 @@ std::vector<std::string> LoadSave::getAdditionalFolders(const std::string& name)
 //    }
 //
 //    return folders;
+    return {}; // body was commented out; previously fell off the end (UB)
 }
 
 juce::File LoadSave::getDataDirectory() {
@@ -286,6 +288,7 @@ juce::File LoadSave::getDataDirectory() {
 //#endif
 //
 //    return directory;
+    return {}; // body was commented out; previously fell off the end (UB)
 }
 
 std::vector<juce::File> LoadSave::getDirectories(const juce::String& folder_name) {

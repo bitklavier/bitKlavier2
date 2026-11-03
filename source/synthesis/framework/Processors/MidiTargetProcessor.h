@@ -695,7 +695,7 @@ public:
             .withInput( "Modulation",juce::AudioChannelSet::discreteChannels(1),false); }
 
     const juce::String getName() const override { return "miditarget"; }
-    double getTailLengthSeconds() const override {}
+    double getTailLengthSeconds() const override { return 0.0; }
     int getNumPrograms() override { return 1; }
     int getCurrentProgram() override { return 1; }
     const juce::String getProgramName(int index) override { return ""; }

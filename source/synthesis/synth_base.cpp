@@ -659,7 +659,7 @@ juce::AudioProcessorGraph::Node::Ptr SynthBase::removeProcessor (juce::AudioProc
 
 bool SynthBase::isConnected (juce::AudioProcessorGraph::NodeID src, juce::AudioProcessorGraph::NodeID dest)
 {
-    engine_->isConnected (src, dest);
+    return engine_->isConnected (src, dest);
 }
 
 juce::AudioProcessorGraph::Node* SynthBase::getNodeForId (juce::AudioProcessorGraph::NodeID id)
@@ -1227,6 +1227,7 @@ juce::AudioProcessorGraph::Node::Ptr SynthBase::addPlugin (std::unique_ptr<juce:
     juce::Point<double> pos,
     PluginDescriptionAndPreference::UseARA useARA)
 {
+    return {}; // unimplemented; previously fell off the end (UB)
 }
 
 int SynthBase::getSampleRate()

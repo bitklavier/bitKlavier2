@@ -34,7 +34,7 @@ public:
     }
     bool hitTest(int x, int y) override
     {
-        layer_1_.contains(x,y );
+        return layer_1_.contains(x,y );
     }
 };
 #endif //BITKLAVIER2_MODULATIONITEM_H

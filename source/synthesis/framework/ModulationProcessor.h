@@ -78,7 +78,7 @@ namespace bitklavier {
         }
 
         void releaseResources() override {}
-        double getTailLengthSeconds() const override {}
+        double getTailLengthSeconds() const override { return 0.0; }
         void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
 
         [[maybe_unused]] void addModulator(ModulatorBase*);
