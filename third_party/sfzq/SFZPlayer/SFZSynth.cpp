@@ -6,6 +6,12 @@
 #include <sstream>
 #include <stdlib.h>
 
+#if defined(_MSC_VER)
+// POSIX random() isn't available with MSVC; rand() gives only 15 bits, so combine to 31
+#include <cstdlib>
+static inline long random() { return (((long) rand() << 16) | ((long) rand() << 1) | (rand() & 1)) & 0x7fffffff; }
+#endif
+
 
 SFZSynth::SFZSynth(int num_voices)
 {

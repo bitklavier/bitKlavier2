@@ -19,8 +19,12 @@
 
 #pragma once
 
+#include <array>
+#include <atomic>
+#include <bitset>
 #include <cmath>
 #include <complex>
+#include <tuple>
 #include <cstdlib>
 #include <random>
 

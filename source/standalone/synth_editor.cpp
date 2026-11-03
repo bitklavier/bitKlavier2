@@ -110,7 +110,9 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
  // mainmenumodel on mac
 
   menuModel = std::make_unique<MainMenuModel>(commandManager);
+#if JUCE_MAC
   juce::MenuBarModel::setMacMainMenu(menuModel.get());
+#endif
 
   // Defer initial gallery auto-load until the window/component has a peer (GL context attached).
   // See tryAutoLoadInitialGallery() and timerCallback().
@@ -125,7 +127,9 @@ SynthEditor::~SynthEditor() {
 #endif
   juce::PopupMenu::dismissAllActiveMenus();
   shutdownAudio();
+#if JUCE_MAC
   juce::MenuBarModel::setMacMainMenu(nullptr);
+#endif
   engine_->shutdown();
 }
 

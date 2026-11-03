@@ -108,10 +108,21 @@ namespace Loki
         typedef typename Base::const_reverse_iterator const_reverse_iterator;
 
         class value_compare
+#if defined(_MSC_VER)
+            // MSVC's STL has no std::__binary_function (a libc++/libstdc++ extension); supply its typedefs directly
+            : private key_compare
+#else
             : public std::__binary_function<value_type, value_type, bool>
             , private key_compare
+#endif
         {
             friend class AssocVector;
+#if defined(_MSC_VER)
+        public:
+            typedef value_type first_argument_type;
+            typedef value_type second_argument_type;
+            typedef bool result_type;
+#endif
         
         protected:
             value_compare(key_compare pred) : key_compare(pred)

@@ -10,10 +10,6 @@ set(CHUCK_C_SOURCES
     "${CHUCK_SRC}/util_raw.c"
     "${CHUCK_SRC}/util_xforms.c"
     "${CHUCK_SRC}/util_sndfile.c"
-    # Stub for Apple private MultitouchSupport framework — allows util_hid.cpp to
-    # link without the private framework; returns NULL so multitouch is gracefully
-    # disabled at runtime (bitKlavier embeds ChucK for audio only, not HID).
-    "${CMAKE_CURRENT_SOURCE_DIR}/chuck_multitouch_stub.c"
     # liblo (OSC) — pre-configured config.h already in lo/
     "${CHUCK_SRC}/lo/address.c"
     "${CHUCK_SRC}/lo/blob.c"
@@ -107,6 +103,10 @@ set_target_properties(chuck PROPERTIES
 )
 
 if(APPLE)
+    # Stub for Apple private MultitouchSupport framework — allows util_hid.cpp to
+    # link without the private framework; returns NULL so multitouch is gracefully
+    # disabled at runtime (bitKlavier embeds ChucK for audio only, not HID).
+    target_sources(chuck PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/chuck_multitouch_stub.c")
     target_compile_definitions(chuck PUBLIC __MACOSX_CORE__)
     target_link_libraries(chuck PUBLIC
         "-framework CoreAudio"
@@ -120,5 +120,7 @@ elseif(UNIX)
     target_compile_definitions(chuck PUBLIC __LINUX_ALSA__)
 elseif(WIN32)
     target_compile_definitions(chuck PUBLIC __WINDOWS_MM__)
-    target_link_libraries(chuck PUBLIC winmm)
+    # liblo (embedded OSC) needs to be told to use Win32 threads
+    target_compile_definitions(chuck PRIVATE HAVE_WIN32_THREADS)
+    target_link_libraries(chuck PUBLIC winmm ws2_32 iphlpapi)
 endif()

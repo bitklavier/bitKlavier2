@@ -9,7 +9,9 @@
 #include "Synthesiser/Sample.h"
 #include "synth_base.h"
 #include <juce_audio_basics/juce_audio_basics.h>
-#include <simd/common.h>
+#if __has_include(<simd/common.h>)
+    #include <simd/common.h> // Apple only
+#endif
 
 CompressorProcessor::CompressorProcessor (SynthBase& parent, const juce::ValueTree& vt, juce::UndoManager* um)
     : PluginBase (parent, vt, um, compressorBusLayout())
