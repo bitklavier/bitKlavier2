@@ -1452,7 +1452,7 @@ void PreparationPopup::setContent(std::unique_ptr<SynthSection> &&prep_pop, cons
         sampleSelectText->setText("use Global Soundset");
     else
         sampleSelectText->setText(
-            juce::String(curr_vt.getProperty(IDs::soundset)).upToFirstOccurrenceOf("||", false, false));
+            curr_vt.getProperty(IDs::soundset).toString().upToFirstOccurrenceOf("||", false, false));
 
     //prepSelectText->setText(curr_vt.getProperty(IDs::name).toString());
 
