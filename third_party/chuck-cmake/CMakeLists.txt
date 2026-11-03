@@ -122,5 +122,5 @@ elseif(WIN32)
     target_compile_definitions(chuck PUBLIC __WINDOWS_MM__)
     # liblo (embedded OSC) needs to be told to use Win32 threads
     target_compile_definitions(chuck PRIVATE HAVE_WIN32_THREADS)
-    target_link_libraries(chuck PUBLIC winmm ws2_32 iphlpapi)
+    target_link_libraries(chuck PUBLIC winmm ws2_32 iphlpapi dinput8 dxguid)
 endif()

@@ -476,7 +476,7 @@ float EnvelopeEditor::getBackupPhase(float phase) {
   return phase;
 }
 
-float powerScale(float value, float power) {
+static float powerScale(float value, float power) { // static: avoids a duplicate-symbol clash with curve_look_and_feel.cpp (MSVC)
     static constexpr float kMinPower = 0.01f;
 
     if (fabsf(power) < kMinPower)

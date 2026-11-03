@@ -306,7 +306,8 @@ set(JUCE_DEPENDENCIES
 
 )
 # Enable LTO only for Release-ish builds
-if (CMAKE_BUILD_TYPE MATCHES "Release|RelWithDebInfo|MinSizeRel")
+# (not on MSVC: /GL objects made bitKlavier_SharedCode.lib exceed the 4GB library limit, LNK1248)
+if (CMAKE_BUILD_TYPE MATCHES "Release|RelWithDebInfo|MinSizeRel" AND NOT MSVC)
     list(APPEND JUCE_DEPENDENCIES juce::juce_recommended_lto_flags)
 endif()
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
