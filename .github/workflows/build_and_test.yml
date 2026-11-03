@@ -369,6 +369,26 @@ jobs:
       - name: Build
         run: cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }} -- -k 0  # keep going so one run reports every error
 
+      - name: Find Windows build artefacts
+        shell: bash
+        run: |
+          echo "ARTEFACTS=${{ env.BUILD_DIR }}/bitKlavier*_artefacts/${{ env.BUILD_TYPE }}" >> $GITHUB_ENV
+          ls -R ${{ env.BUILD_DIR }}/bitKlavier*_artefacts/${{ env.BUILD_TYPE }} | head -50
+
+      - name: Upload Standalone (Windows)
+        uses: actions/upload-artifact@v7
+        with:
+          name: bitKlavier-windows-standalone
+          path: ${{ env.ARTEFACTS }}/Standalone/
+          if-no-files-found: error
+
+      - name: Upload VST3 (Windows)
+        uses: actions/upload-artifact@v7
+        with:
+          name: bitKlavier-windows-vst3
+          path: ${{ env.ARTEFACTS }}/VST3/
+          if-no-files-found: error
+
   release:
     if: contains(github.ref, 'tags/v')
     runs-on: ubuntu-latest
