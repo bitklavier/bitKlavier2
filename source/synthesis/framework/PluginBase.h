@@ -16,7 +16,7 @@
 
 class SynthSection;
 class SynthBase;
-class TuningState;
+struct TuningState;
 class TuningProcessor;
 class TempoProcessor;
 class SynchronicProcessor;

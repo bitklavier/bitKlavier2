@@ -12,8 +12,8 @@
 class ModulatorBase;
 
 namespace bitklavier {
-class ModulationConnection;
-class StateConnection;
+struct ModulationConnection;
+struct StateConnection;
 
     class ResetProcessor : public juce::AudioProcessor {
     public:

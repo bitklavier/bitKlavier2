@@ -51,7 +51,7 @@ namespace bitklavier
     class StateConnection;
 }
 
-class PopupItems;
+struct PopupItems;
 class SynthSection;
 class
 SynthGuiInterface :  public juce::ApplicationCommandTarget {
