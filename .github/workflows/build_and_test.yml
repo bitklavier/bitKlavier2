@@ -269,7 +269,17 @@ jobs:
 
             # Notarize and staple
             xcrun notarytool submit "$OUTPUT_PKG" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
-            xcrun stapler staple "$OUTPUT_PKG"
+            # Stapling talks to Apple's CloudKit and fails transiently (e.g. error 68, "network connection was lost")
+            # even after notarization was accepted, so retry it (it is safe to repeat).
+            for attempt in 1 2 3 4 5; do
+              xcrun stapler staple "$OUTPUT_PKG" && break
+              if [ "$attempt" -eq 5 ]; then
+                echo "stapler failed after $attempt attempts"
+                exit 1
+              fi
+              echo "stapler attempt $attempt failed, retrying in $((attempt * 20))s..."
+              sleep $((attempt * 20))
+            done
           }
 
           cd packaging
