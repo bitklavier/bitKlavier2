@@ -79,6 +79,33 @@ juce::String LegacyGalleryImporter::parseIndexedBools (const juce::XmlElement& e
     return result;
 }
 
+// Old <customScale f0..f11> (cents) -> "c0 c1 ... c11 " circular tuning string.
+static juce::String legacyCircularString (const juce::XmlElement* cs)
+{
+    if (cs == nullptr) return {};
+    juce::String parts;
+    for (int i = 0; i < 12; ++i)
+    {
+        juce::String key = "f" + juce::String (i);
+        if (! cs->hasAttribute (key)) break;
+        parts += juce::String ((float) cs->getDoubleAttribute (key, 0.0), 2) + " ";
+    }
+    return parts;
+}
+
+// Old <absoluteOffsets f0..f127> (cents) -> sparse "idx:val idx:val " absolute tuning string.
+static juce::String legacyAbsoluteString (const juce::XmlElement* ab)
+{
+    if (ab == nullptr) return {};
+    juce::String s;
+    for (int i = 0; i < 128; ++i)
+    {
+        float v = (float) ab->getDoubleAttribute ("f" + juce::String (i), 0.0);
+        if (v != 0.0f) s += juce::String (i) + ":" + juce::String (v) + " ";
+    }
+    return s;
+}
+
 int LegacyGalleryImporter::mapOldTuningSystem (int oldScale)
 {
     // Map old TuningSystem enum → new TuningSystemNames sequential index.
@@ -1121,25 +1148,16 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
 
     // Custom scale → circularTuning (old f0..f11 are already in cents)
     juce::String circTuning = "0 0 0 0 0 0 0 0 0 0 0 0 ";
+    juce::String absTuning;
     if (params != nullptr)
     {
-        const juce::XmlElement* cs = params->getChildByName ("customScale");
-        if (cs != nullptr)
-        {
-            juce::String parts;
-            for (int i = 0; i < 12; ++i)
-            {
-                juce::String key = "f" + juce::String(i);
-                if (! cs->hasAttribute (key)) break;
-                float cents = (float) cs->getDoubleAttribute (key, 0.0);
-                parts += juce::String (cents, 2) + " ";
-            }
-            if (parts.isNotEmpty()) circTuning = parts;
-        }
+        juce::String parts = legacyCircularString (params->getChildByName ("customScale"));
+        if (parts.isNotEmpty()) circTuning = parts;
+        absTuning = legacyAbsoluteString (params->getChildByName ("absoluteOffsets"));
     }
     vt.setProperty ("circularTuning",        circTuning, nullptr);
     vt.setProperty ("circularTuning_custom", circTuning, nullptr);
-    vt.setProperty ("absoluteTuning",        "",         nullptr);
+    vt.setProperty ("absoluteTuning",        absTuning,  nullptr);
 
     // Scala defaults
     vt.setProperty ("scalaScale", "! 12 Tone Equal Temperament.scl\n!\n12 Tone Equal Temperament | ED2-12\n 12\n!\n 100.00000\n 200.00000\n 300.00000\n 400.00000\n 500.00000\n 600.00000\n 700.00000\n 800.00000\n 900.00000\n 1000.00000\n 1100.00000\n 2/1\n", nullptr);
@@ -1166,7 +1184,7 @@ juce::ValueTree LegacyGalleryImporter::convertTuning (const juce::XmlElement& el
     pd.setProperty ("fundamental",   fundamental,  nullptr);
     pd.setProperty ("tuningSystem",  tuningSystem, nullptr);
     pd.setProperty ("tuningType",    tuningType,   nullptr);
-    pd.setProperty ("absoluteTuning","",           nullptr);
+    pd.setProperty ("absoluteTuning",absTuning,   nullptr);
     pd.setProperty ("circularTuning", circTuning,  nullptr);
     vt.addChild (pd, -1, nullptr);
 
@@ -2031,9 +2049,7 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                         mc.addChild (c, -1, nullptr);
                     };
 
-                    if (modDirty->getIntAttribute ("d0",  0))
-                        addModConn ("offset",
-                            juce::var ((float) modParams->getDoubleAttribute ("offset", 0.0) * 100.0f));
+                    // Old tuning-mod dirty indices: d0 = tuning Id, then params in XML order.
                     if (modDirty->getIntAttribute ("d1",  0))
                         addModConn ("tuningSystem",
                             juce::var (mapOldTuningSystem (modParams->getIntAttribute ("scale", 0))));
@@ -2041,26 +2057,43 @@ juce::ValueTree LegacyGalleryImporter::importFromFile (const juce::File& xmlFile
                         addModConn ("fundamental",
                             juce::var (modParams->getIntAttribute ("fundamental", 0)));
                     if (modDirty->getIntAttribute ("d3",  0))
+                        addModConn ("offset",
+                            juce::var ((float) modParams->getDoubleAttribute ("offset", 0.0) * 100.0f));
+                    if (modDirty->getIntAttribute ("d4",  0))
                         addModConn ("tAdaptiveIntervalScale",
                             juce::var (mapOldTuningSystem (modParams->getIntAttribute ("adaptiveIntervalScale", 0))));
-                    if (modDirty->getIntAttribute ("d4",  0))
+                    if (modDirty->getIntAttribute ("d5",  0))
                         addModConn ("tAdaptiveInversional",
                             juce::var (modParams->getIntAttribute ("adaptiveInversional", 0)));
-                    if (modDirty->getIntAttribute ("d5",  0))
+                    if (modDirty->getIntAttribute ("d6",  0))
                         addModConn ("tAdaptiveAnchorScale",
                             juce::var (mapOldTuningSystem (modParams->getIntAttribute ("adaptiveAnchorScale", 0))));
-                    if (modDirty->getIntAttribute ("d6",  0))
+                    if (modDirty->getIntAttribute ("d7",  0))
                         addModConn ("tAdaptiveAnchorFundamental",
                             juce::var (modParams->getIntAttribute ("adaptiveAnchorFund", 0)));
-                    if (modDirty->getIntAttribute ("d7",  0))
+                    if (modDirty->getIntAttribute ("d8",  0))
                         addModConn ("tAdaptiveClusterThresh",
                             juce::var ((float) modParams->getDoubleAttribute ("adaptiveClusterThresh", 0.0)));
-                    if (modDirty->getIntAttribute ("d8",  0))
+                    if (modDirty->getIntAttribute ("d9",  0))
                         addModConn ("tAdaptiveHistory",
                             juce::var ((float) modParams->getDoubleAttribute ("adaptiveHistory", 1.0)));
-                    if (modDirty->getIntAttribute ("d11", 0))
+                    if (modDirty->getIntAttribute ("d12", 0))
                         addModConn ("tuningType",
                             juce::var (modParams->getIntAttribute ("adaptiveSystem", 0)));
+                    if (modDirty->getIntAttribute ("d14", 0))
+                    {
+                        juce::String circ = legacyCircularString (modParams->getChildByName ("customScale"));
+                        if (circ.isNotEmpty())
+                            addModConn ("circularTuning", juce::var (circ));
+                    }
+                    if (modDirty->getIntAttribute ("d15", 0))
+                    {
+                        // An empty string compares equal to a void juce::var, which
+                        // TuningState::processStateChanges treats as "not set" -- so it would
+                        // never clear the offsets. Use an explicit zero entry to force a reset.
+                        juce::String abs = legacyAbsoluteString (modParams->getChildByName ("absoluteOffsets"));
+                        addModConn ("absoluteTuning", juce::var (abs.isEmpty() ? juce::String ("0:0.0 ") : abs));
+                    }
                 }
                 else if ((selfType == OldDirectMod || selfType == OldNostalgicMod)
                          && modDirty != nullptr && modParams != nullptr)
