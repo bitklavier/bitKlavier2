@@ -17,8 +17,8 @@ class ModulatorBase;
 
 namespace bitklavier {
     static constexpr int kMaxModulationChannels = 256;
-    class ModulationConnection;
-    class StateConnection;
+    struct ModulationConnection;
+    struct StateConnection;
     struct ModulatorRouting{
         std::vector<ModulationConnection*> mod_connections;
     };

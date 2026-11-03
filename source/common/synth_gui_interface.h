@@ -47,8 +47,8 @@ struct SynthGuiData {
 namespace bitklavier
 {
     class ModulationProcessor;
-    class ModulationConnection;
-    class StateConnection;
+    struct ModulationConnection;
+    struct StateConnection;
 }
 
 struct PopupItems;

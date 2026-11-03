@@ -38,7 +38,7 @@ class SynthBase;
 
 namespace bitklavier {
     class ModulationConnectionBank;
-    class StateConnection;
+    struct StateConnection;
 }
 
 class ModulationAmountKnob : public SynthSlider {
