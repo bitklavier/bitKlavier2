@@ -340,6 +340,35 @@ jobs:
           name: ${{ env.ARTIFACT_NAME }}-installers
           path: packaging/${{ env.ARTIFACT_NAME }}*.pkg
 
+  # Build-only probe for the Windows port (VST3 + Standalone). It never blocks the
+  # macOS build/release: continue-on-error keeps the overall run green, and `release`
+  # does not depend on it. Check this job's log for the current list of Windows errors.
+  windows_build:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+    name: Windows (build only)
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Setup MSVC developer prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Ninja
+        run: choco install ninja
+
+      - name: Cache the build
+        uses: mozilla-actions/sccache-action@v0.0.10
+
+      - name: Configure
+        run: cmake -B ${{ env.BUILD_DIR }} -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache .
+
+      - name: Build
+        run: cmake --build ${{ env.BUILD_DIR }} --config ${{ env.BUILD_TYPE }}
+
   release:
     if: contains(github.ref, 'tags/v')
     runs-on: ubuntu-latest

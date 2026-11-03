@@ -30,7 +30,11 @@ set(BUNDLE_ID "com.manyarrowsmusic.bitklavier5")
 
 # Change me! Set the plugin formats you want built
 # Valid choices: AAX Unity VST VST3 AU AUv3 Standalone
-set(FORMATS Standalone AU VST3 AUv3)
+# AU and AUv3 are Apple-only
+set(FORMATS Standalone VST3)
+if(APPLE)
+    list(APPEND FORMATS AU AUv3)
+endif()
 
 # For simplicity, the name of the CMake project is also the name of the target
 project(${PROJECT_NAME} VERSION ${CURRENT_VERSION})
@@ -139,11 +143,13 @@ juce_add_plugin("${PROJECT_NAME}"
     PRODUCT_NAME "${PRODUCT_NAME}"
     PLIST_TO_MERGE "<plist version=\"1.0\"><dict><key>NSBluetoothAlwaysUsageDescription</key><string>bitKlavier uses Bluetooth to connect to Bluetooth MIDI devices.</string></dict></plist>")
 
-target_link_libraries("${PROJECT_NAME}" PRIVATE
-        "-framework MetalPerformanceShaders"
-        "-framework MetalPerformanceShadersGraph"
-        "-framework Metal"
-)
+if(APPLE)
+    target_link_libraries("${PROJECT_NAME}" PRIVATE
+            "-framework MetalPerformanceShaders"
+            "-framework MetalPerformanceShadersGraph"
+            "-framework Metal"
+    )
+endif()
 
 # This lets us use our code in both the JUCE targets and our Test target
 # Without running into ODR violations
@@ -305,8 +311,10 @@ if (CMAKE_BUILD_TYPE MATCHES "Release|RelWithDebInfo|MinSizeRel")
 endif()
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_options(-O0 -g3 -fno-omit-frame-pointer)
-    add_link_options(-O0)
+    if(NOT MSVC)
+        add_compile_options(-O0 -g3 -fno-omit-frame-pointer)
+        add_link_options(-O0)
+    endif()
 endif()
 target_link_libraries(SharedCode
     INTERFACE
