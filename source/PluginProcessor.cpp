@@ -5,21 +5,8 @@
 #include "PluginEditor.h"
 #include "sound_engine.h"
 #include "UserPreferences.h"
+#include "UserPaths.h"
 
-namespace {
-    static juce::File expandUserPath(const juce::String& path)
-    {
-        if (path.isEmpty())
-            return juce::File();
-
-        if (path.startsWith("~/"))
-        {
-            auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
-            return home.getChildFile(path.fromFirstOccurrenceOf("~/", false, false));
-        }
-        return juce::File(path);
-    }
-}
 
 
 //==============================================================================
@@ -134,10 +121,7 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
             if (setStateWasCalled_ || isSamplesLoading() || hasPendingPreset())
                 return;
 
-            auto galleries = juce::File::getSpecialLocation (juce::File::userHomeDirectory)
-                                 .getChildFile ("Documents")
-                                 .getChildFile ("bitKlavier")
-                                 .getChildFile ("galleries");
+            auto galleries = bitklavier::getBitKlavierGalleriesDir();
             juce::File basicPiano = galleries.getChildFile ("Basic Piano.bk2");
             if (!basicPiano.existsAsFile())
                 basicPiano = galleries.getChildFile ("BasicPiano.bk2");
@@ -300,7 +284,7 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
         if (state.hasProperty ("last_gallery_path"))
         {
             juce::String lastPath = state.getProperty ("last_gallery_path");
-            juce::File candidate = expandUserPath (lastPath);
+            juce::File candidate = bitklavier::expandUserPath (lastPath);
 
             if (candidate.existsAsFile())
             {

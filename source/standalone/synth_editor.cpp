@@ -26,23 +26,10 @@
 #include "startup.h"
 #include "utils.h"
 #include "../common/UserPreferences.h"
+#include "../common/UserPaths.h"
 #include "../common/load_save.h"
 #include <memory>
 
-namespace {
-    static juce::File expandUserPath(const juce::String& path)
-    {
-        if (path.isEmpty())
-            return juce::File();
-
-        if (path.startsWith("~/"))
-        {
-            auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
-            return home.getChildFile(path.fromFirstOccurrenceOf("~/", false, false));
-        }
-        return juce::File(path);
-    }
-}
 
 SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), SynthBase(&deviceManager) {
   static constexpr int kHeightBuffer = 50;
@@ -244,7 +231,7 @@ void SynthEditor::tryAutoLoadInitialGallery()
     initialGalleryLoadAttempted = true;
 
     juce::String lastPath = user_prefs->tree.getProperty("last_gallery_path");
-    juce::File candidate = expandUserPath(lastPath);
+    juce::File candidate = bitklavier::expandUserPath(lastPath);
 
     auto tryLoad = [this](const juce::File& f) -> bool {
         if (! f.existsAsFile())
@@ -259,10 +246,7 @@ void SynthEditor::tryAutoLoadInitialGallery()
 
     if (!loaded)
     {
-        auto docs = juce::File::getSpecialLocation(juce::File::userHomeDirectory)
-                        .getChildFile("Documents")
-                        .getChildFile("bitKlavier")
-                        .getChildFile("galleries");
+        auto docs = bitklavier::getBitKlavierGalleriesDir();
         juce::File basicPiano = docs.getChildFile("Basic Piano.").withFileExtension(bitklavier::kPresetExtension.c_str());
         if (!basicPiano.existsAsFile())
             basicPiano = docs.getChildFile("Basic Piano").withFileExtension(bitklavier::kPresetExtension.c_str());

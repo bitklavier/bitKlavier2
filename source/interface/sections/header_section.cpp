@@ -17,6 +17,7 @@
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "UserPaths.h"
 #include "header_section.h"
 #include "ConstructionSite.h"
 #include "FullInterface.h"
@@ -777,13 +778,8 @@ void HeaderSection::buttonClicked(juce::Button *clicked_button) {
         // Resolve the base galleries path (expand ~ to home if present)
         auto galleriesPathVar = parent->getSynth()->user_prefs->userPreferences->tree.getProperty ("default_galleries_path");
         juce::String galleriesPath = galleriesPathVar.toString();
-        if (galleriesPath.startsWithChar('~')) {
-            auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory).getFullPathName();
-            if (galleriesPath == "~")
-                galleriesPath = home;
-            else if (galleriesPath.startsWith("~/"))
-                galleriesPath = home + galleriesPath.substring(1);
-        }
+        if (galleriesPath.startsWithChar('~'))
+            galleriesPath = bitklavier::expandUserPath (galleriesPath).getFullPathName();
         juce::File baseDir (galleriesPath);
 
         // Recursive helper (Y-combinator style): fills `menu` with .bk2 files and

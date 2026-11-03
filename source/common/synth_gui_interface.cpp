@@ -17,6 +17,7 @@
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "UserPaths.h"
 #include "synth_gui_interface.h"
 #include "CompressorParameterView.h"
 #include "ConstructionSite.h"
@@ -303,10 +304,7 @@ bool SynthGuiInterface::isDirty() const
 
 bool isProtectedGallery (const juce::File& file)
 {
-    auto galleries = juce::File::getSpecialLocation (juce::File::userHomeDirectory)
-                         .getChildFile ("Documents")
-                         .getChildFile ("bitKlavier")
-                         .getChildFile ("galleries");
+    auto galleries = bitklavier::getBitKlavierGalleriesDir();
 
     juce::File basicPiano = galleries.getChildFile ("Basic Piano")
                                 .withFileExtension (bitklavier::kPresetExtension.c_str());
