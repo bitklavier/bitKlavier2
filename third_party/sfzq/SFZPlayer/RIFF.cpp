@@ -43,9 +43,10 @@ void RIFFChunk::seek_after(std::istream* file)
 
 std::string RIFFChunk::read_string(std::istream* file)
 {
-	char str[size];
-	file->read(str, size);
-	return std::string(str);
+	// (was a VLA, which MSVC doesn't support)
+	std::string buf(size, '\0');
+	file->read(&buf[0], size);
+	return std::string(buf.c_str());
 }
 
 
