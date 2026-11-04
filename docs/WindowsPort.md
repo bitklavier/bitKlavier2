@@ -60,7 +60,8 @@ Branch: `windows-port` (off `main` at v5.3.1). **Not merged.** Last verified CI 
   and `ResonanceStateMod_tests` work fully.
 - `StateModSave_test` has an issue that **predates the Windows port** (confirmed by Dan against an earlier build), so it is
   not a regression from this branch. Track it separately.
-- Still to do: SFZ playback; `SynchronicHost_test` (host tempo).
+- `SynchronicHost_test` (host tempo) works.
+- Still to do: SFZ playback.
 - Note: `CLAUDE.md` names test galleries (`RampModSave_test.bk2`, etc.) that are not in the repo; they live in the
   Tests folder above. `test-presets/` in the repo holds other presets (e.g. `RampModAlternate_*`).
 
