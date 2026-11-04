@@ -17,6 +17,7 @@
  * along with vital.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "synth_base.h"
+#include <bit>
 
 #include "IMuteSolable.h"
 #include "SampleLoadManager.h"
@@ -2040,6 +2041,35 @@ bool SynthBase::connectStateModulation (const std::string& source, const std::st
     }
     if (create && connection)
         connectStateModulation (connection, connection->state);
+
+    // A Circular Tuning modification only has an audible effect when the tuning system is Custom
+    // (TuningState ignores the custom circular offsets for any other system). So when a state mod is
+    // connected to a tuning's circularTuning, also connect it to that tuning's tuningSystem, set to
+    // Custom, unless the user has already connected tuningSystem themselves. This mirrors what the
+    // legacy gallery importer produces. Only done for newly created connections made from the UI,
+    // so galleries being loaded (which go through the ValueTree path above) are unaffected.
+    if (create && connection != nullptr)
+    {
+        static const std::string kCircular = "_circularTuning";
+        if (destination.size() > kCircular.size()
+            && destination.compare (destination.size() - kCircular.size(), kCircular.size(), kCircular) == 0)
+        {
+            const std::string tuningSystemDest =
+                destination.substr (0, destination.size() - kCircular.size()) + "_tuningSystem";
+
+            if (getStateConnection (source, tuningSystemDest) == nullptr)
+            {
+                connectStateModulation (source, tuningSystemDest);
+                if (auto* tuningSystemConnection = getStateConnection (source, tuningSystemDest))
+                {
+                    // EnumChoiceParameter::processStateChanges reads this value as a bit position: (1 << n)
+                    const int customBit = std::countr_zero (static_cast<unsigned int> (TuningSystem::Custom));
+                    tuningSystemConnection->state.setProperty (IDs::tuningSystem, customBit, nullptr);
+                    tuningSystemConnection->setChange (tuningSystemConnection->state);
+                }
+            }
+        }
+    }
     return create;
 }
 
