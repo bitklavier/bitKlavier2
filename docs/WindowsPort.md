@@ -55,9 +55,14 @@ Branch: `windows-port` (off `main` at v5.3.1). **Not merged.** Last verified CI 
 **Results so far (2026-11-04, build from CI run 41719185963, tested by Dan):**
 - Passed: Compressor; reload of last gallery on launch; Gallery menu (lists Basic Piano plus subfolders);
   opening/saving galleries; protected-gallery behavior for Basic Piano; ChucKlavier example galleries;
-  soundfont playback.
-- Still to do: modulation connections (`RampModSave_test`, `StateModSave_test`, `LFO_test`), SFZ playback,
-  `SynchronicHost_test`, pluginval on Release AU/VST3.
+  soundfont playback; **pluginval on Release AU and VST3 (both pass)**.
+- Modulation tests, in `~/Documents/bitKlavier/galleries/Tests/` (not in the repo): `LFO_test`, `RampModSave_test`
+  and `ResonanceStateMod_tests` work fully.
+- `StateModSave_test` has an issue that **predates the Windows port** (confirmed by Dan against an earlier build), so it is
+  not a regression from this branch. Track it separately.
+- Still to do: SFZ playback; `SynchronicHost_test` (host tempo).
+- Note: `CLAUDE.md` names test galleries (`RampModSave_test.bk2`, etc.) that are not in the repo; they live in the
+  Tests folder above. `test-presets/` in the repo holds other presets (e.g. `RampModAlternate_*`).
 
 Original checklist:
 - Launch standalone; load `Prelude 1 (Inside Out)` etc. and confirm sound plays.
