@@ -61,7 +61,10 @@ Branch: `windows-port` (off `main` at v5.3.1). **Not merged.** Last verified CI 
 - `StateModSave_test` has an issue that **predates the Windows port** (confirmed by Dan against an earlier build), so it is
   not a regression from this branch. Track it separately.
 - `SynchronicHost_test` (host tempo) works.
-- Still to do: SFZ playback.
+- SF2 soundfont names/playback read correctly (this exercises the `RIFF.cpp` VLA fix, the only sfzq change that
+  compiles on macOS). No `.sfz` files were available to test; the `.sfz`-specific change (`random()` in `SFZSynth.cpp`)
+  is MSVC-only, so macOS is unaffected.
+- **macOS testing is complete.** Remaining gate before merge: Windows runtime testing.
 - Note: `CLAUDE.md` names test galleries (`RampModSave_test.bk2`, etc.) that are not in the repo; they live in the
   Tests folder above. `test-presets/` in the repo holds other presets (e.g. `RampModAlternate_*`).
 
