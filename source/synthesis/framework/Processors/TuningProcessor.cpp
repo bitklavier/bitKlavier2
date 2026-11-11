@@ -161,6 +161,38 @@ int TuningState::getClosestKey(int noteNum, float transp, bool tuneTransposition
         return static_cast<int>(ftom(lastFrequencyTarget, getGlobalTuningReference()));
     }
 
+    /**
+     * Static / Scala / MTS-ESP: choose the sample nearest the pitch we will actually play,
+     * by deriving the key from the same target frequency that drives playback. This accounts
+     * for absolute, circular, and overall offsets (which can be large), as well as semitone
+     * width and transpositions.
+     *      - getStaticTargetFrequency() / getScalaTargetFrequency() are side-effect free
+     *        (they don't touch lastFrequencyTarget or spiralNotes)
+     *      - clamped to 0-127, since offsets can push the key out of the sample range
+     */
+    double freq;
+    switch (getTuningType())
+    {
+        case TuningType::Static:
+            freq = getStaticTargetFrequency (noteNum, transp, tuneTranspositions);
+            break;
+        case TuningType::Scala_KBM:
+            freq = getScalaTargetFrequency (noteNum, transp, tuneTranspositions);
+            break;
+        case TuningType::MTS_Client:
+            freq = mtsClient.noteToFrequency (noteNum) * intervalToRatio (getOverallOffset()) * intervalToRatio (transp);
+            break;
+        default:
+            return juce::jlimit (0, 127, static_cast<int>(std::round (noteNum + transp)));
+    }
+
+    return juce::jlimit (0, 127, static_cast<int>(std::round (ftom (freq, getGlobalTuningReference()))));
+
+    /**
+     * previous implementation, kept for reference: only accounted for semitone width and transposition,
+     * ignoring absolute/circular/overall offsets, so large offsets chose the wrong sample
+     */
+    /*
     // first check for when there is no need to adjust for semitone width (which is 99.9% of the time!)
     if (getSemitoneWidthOffsetForMidiNote(noteNum) == 0)
     {
@@ -176,6 +208,7 @@ int TuningState::getClosestKey(int noteNum, float transp, bool tuneTransposition
     }
 
     return static_cast<int>(std::round(noteNum + workingOffset + transp));
+    */
 }
 
 /**
