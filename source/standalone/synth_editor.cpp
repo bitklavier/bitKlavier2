@@ -52,13 +52,18 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
   //computer_keyboard_ = std::make_unique<SynthComputerKeyboard>(engine_.get(), keyboard_state_.get());
   current_time_ = 0.0;
 
-  setAudioChannels(bitklavier::kNumChannels, bitklavier::kNumChannels);
+  // no audio input by default: opening an input device (e.g. the built-in mic) can
+  // noticeably increase latency. users can still enable one in the audio device selector.
+  setAudioChannels(0, bitklavier::kNumChannels);
 
   juce::AudioDeviceManager::AudioDeviceSetup setup;
   deviceManager.getAudioDeviceSetup(setup);
   setup.sampleRate = bitklavier::kDefaultSampleRate;
   setup.bufferSize = 128;
-  deviceManager.initialise(bitklavier::kNumChannels, bitklavier::kNumChannels, nullptr, true, "", &setup);
+  setup.inputDeviceName = "";
+  setup.inputChannels.clear();
+  setup.useDefaultInputChannels = false;
+  deviceManager.initialise(0, bitklavier::kNumChannels, nullptr, true, "", &setup);
 
   if (deviceManager.getCurrentAudioDevice() == nullptr) {
     const juce::OwnedArray<juce::AudioIODeviceType>& device_types = deviceManager.getAvailableDeviceTypes();
