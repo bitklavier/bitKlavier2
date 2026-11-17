@@ -540,6 +540,12 @@ void BKSynthesiser::noteOn (const int midiChannel,
         for (auto* voice : voices)
             if (voice->getCurrentlyPlayingNote() == midiNoteNumber && voice->isPlayingChannel (midiChannel))
             {
+                // A voice whose key is already up but which is still sounding only because the
+                // sustain/sostenuto pedal holds it should keep ringing when the note is repeated;
+                // the new note simply layers on top (like a real piano with the pedal down).
+                if (!voice->isKeyDown() && (voice->isSustainPedalDown() || voice->isSostenutoPedalDown()))
+                    continue;
+
                 // DBG("BKSynthesiser::noteOn, stopping voice " << voice->getCurrentlyPlayingNote() << " for midiNoteNumber " << midiNoteNumber);
                 stopVoice (voice, 1.0f, true);
             }
