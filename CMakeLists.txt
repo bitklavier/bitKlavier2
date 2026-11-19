@@ -132,6 +132,11 @@ juce_add_plugin("${PROJECT_NAME}"
     NEEDS_MIDI_INPUT TRUE
     NEEDS_WEB_BROWSER TRUE
 
+    # Adds NSMicrophoneUsageDescription to Info.plist; without it a hardened-runtime build
+    # (e.g. the CI-signed one) is silently denied microphone access and gets zeros.
+    MICROPHONE_PERMISSION_ENABLED TRUE
+    MICROPHONE_PERMISSION_TEXT "bitKlavier uses audio input for the External input of Blendronic, Reverb and other preparations."
+
     # The name of your final executable
     # This is how it's listed in the DAW
     # This can be different from PROJECT_NAME and can have spaces!
