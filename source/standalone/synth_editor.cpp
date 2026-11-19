@@ -62,8 +62,12 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
   setup.bufferSize = 128;
   setup.inputDeviceName = "";
   setup.inputChannels.clear();
-  setup.useDefaultInputChannels = false;
-  deviceManager.initialise(0, bitklavier::kNumChannels, nullptr, true, "", &setup);
+  setup.useDefaultInputChannels = true;
+  // NB: keep numInputChannelsNeeded = kNumChannels. The device selector sets
+  // useDefaultInputChannels = true when the user picks an input device, and the
+  // AudioDeviceManager then opens numInputChannelsNeeded channels, so passing 0 here
+  // would make a chosen input device deliver no channels at all.
+  deviceManager.initialise(bitklavier::kNumChannels, bitklavier::kNumChannels, nullptr, true, "", &setup);
 
   if (deviceManager.getCurrentAudioDevice() == nullptr) {
     const juce::OwnedArray<juce::AudioIODeviceType>& device_types = deviceManager.getAvailableDeviceTypes();
@@ -72,6 +76,19 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui), Synth
       deviceManager.setCurrentAudioDeviceType(device_type->getTypeName(), true);
       if (deviceManager.getCurrentAudioDevice())
         break;
+    }
+  }
+
+  // initialiseDefault() may have picked the default input device (e.g. the built-in mic);
+  // force no input unless the user chooses one. useDefaultInputChannels stays true so
+  // numInputChansNeeded is preserved for when they do.
+  {
+    auto current = deviceManager.getAudioDeviceSetup();
+    if (current.inputDeviceName.isNotEmpty()) {
+      current.inputDeviceName = "";
+      current.inputChannels.clear();
+      current.useDefaultInputChannels = true;
+      deviceManager.setAudioDeviceSetup(current, false);
     }
   }
 
